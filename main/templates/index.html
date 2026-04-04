@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+{% load static %}
+
+<head>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Aldrich&display=swap" rel="stylesheet">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather Display</title>
+    <link rel="icon" type="image/png" href="{% static 'images/icon.png' %}">
+    <style>
+        body {
+            font-family: 'Aldrich', monospace;
+        }
+    </style>
+</head>
+
+<body>
+    <form action="/" method="get">
+        <label for="pincode">Pincode</label>
+        <input type="text" class="form-control" id="pincode" name="pincode" placeholder="e.g., 232101">
+        <button type="submit">click me!</button>
+    </form>
+
+    <div class="container-info">
+        <div class="temp-img">
+            <img src="{% static path %}" alt="weather icon" style="max-width: 100px;">
+            <div class="city">{{ city }}</div>
+            <div class="temperature">{{ temp }}&deg;C</div>
+        </div>
+    </div>
+
+    <div class="container-date_time">
+        <div class="time">{{ times }}</div>
+        <div class="date">{{ day }} {{ month }} {{ year }}</div>
+    </div>
+
+    <div class="24h">
+        <h3>Next 24 Hours</h3>
+        {% for i in hours_temp %}
+        <li>{{ i }}&deg;C</li>
+        {% endfor %}
+    </div>
+
+    <div class="weekly">
+        <h3>Weekly</h3>
+        {% for date, day_info in weekly.items %}
+        <li>{{ day_info.min_temp }}&deg;C</li>
+        {% endfor %}
+    </div>
+
+    <script>
+        // Save pincode to localStorage when form is submitted
+        document.querySelector('form').addEventListener('submit', function () {
+            let pincode = document.getElementById('pincode').value;
+            if (pincode) {
+                localStorage.setItem('lastSearchedPincode', pincode);
+            }
+        });
+
+        // Auto-load last pincode on page load (if not already in URL)
+        document.addEventListener('DOMContentLoaded', function () {
+            let lastPincode = localStorage.getItem('lastSearchedPincode');
+            let urlParams = new URLSearchParams(window.location.search);
+            if (lastPincode && !urlParams.has('pincode')) {
+                document.getElementById('pincode').value = lastPincode;
+                document.querySelector('form').submit();
+            }
+        });
+    </script>
+</body>
+
+</html>

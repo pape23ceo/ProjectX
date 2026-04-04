@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Sign Up{% endblock title %}
+
+{% block container %}
+<div class="box">
+    <div class="container">
+        {{ message }}
+        <form class="form-section" method="post" action="">
+            {% csrf_token %}
+            <div class="top">
+                <!-- optional header content -->
+            </div>
+            <h2>SIGN UP</h2>
+            <div class="input-box">
+                <input type="text" name="username" class="input" placeholder="Username" name="username" required>
+                <i class="bx bx-user"></i>
+            </div>
+            <div class="input-box">
+                <input type="email" name="email" class="input" placeholder="Email" required>
+                <i class="bx bx-envelope"></i> <!-- consider using an envelope icon -->
+            </div>
+            <div class="input-box">
+                <input type="password" name="password1" class="input" placeholder="Password" name="password1" required>
+                <i class="bx bx-lock-alt"></i>
+            </div>
+            <div class="input-box">
+                <input type="password" name="password2" class="input" placeholder="Repeat Password" name="password2"
+                    required>
+                <i class="bx bx-lock-alt"></i>
+            </div>
+            <div class="input-box">
+                <input type="submit" class="submit" value="Sign up">
+            </div>
+            <div class="login-link">
+                <a href="{% url 'login' %}">Already have an account?</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock container %}

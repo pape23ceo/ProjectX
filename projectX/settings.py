@@ -1,3 +1,7 @@
+import os
+from dotenv import load_dotenv
+
+load_dotenv() # Load variables from a .env file
 """
 Django settings for projectX project.
 
@@ -37,32 +41,35 @@ DEBUG = True
 
 # ALLOWED_HOSTS: A list of strings representing the host/domain names that this Django site can serve.
 # It prevents HTTP Host header attacks. In production, you should list your actual domain names and IPs.
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
 # INSTALLED_APPS: A list of strings naming all the Django applications that are active in this project.
 # Django comes with several built-in apps (like admin, auth, etc.), and you'll add your own here.
 INSTALLED_APPS = [
-    'services.apps.ServicesConfig',  # Your 'services' application. The '.apps.ServicesConfig' specifies the configuration class.
-    'django.contrib.admin',        # Django's administrative interface.
-    'django.contrib.auth',         # Django's authentication and authorization system.
-    'django.contrib.contenttypes',  # A framework for handling content types in Django.
-    'django.contrib.sessions',     # Django's session management system.
-    'django.contrib.messages',     # A framework for displaying temporary messages to users.
-    'django.contrib.staticfiles',  # For managing static files like CSS, JavaScript, and images.
+    "unfold", # This is custom admin panel extension for dajngo this help to imporve the quality of work flow
+    'customadmin.apps.CustomadminConfig', # Your 'customadmin' application. The '.apps.CustomadminConfig' specifies the configuration class.
+    'user.apps.UserConfig',              # Your 'user' application. The '.apps.UserConfig' specifies the configuration class.
+    'main.apps.MainConfig',              # Your 'services' application. The '.apps.ServicesConfig' specifies the configuration class.
+    'django.contrib.admin',              # Django's administrative interface.
+    'django.contrib.auth',               # Django's authentication and authorization system.
+    'django.contrib.contenttypes',       # A framework for handling content types in Django.
+    'django.contrib.sessions',           # Django's session management system.
+    'django.contrib.messages',           # A framework for displaying temporary messages to users.
+    'django.contrib.staticfiles',        # For managing static files like CSS, JavaScript, and images.
 ]
 
 # MIDDLEWARE: A list of middleware classes that are executed in order for each request and response in your Django application.
 # Middleware can perform various tasks like security checks, session handling, and request/response processing.
 MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',  # Provides security enhancements.
-    'django.contrib.sessions.middleware.SessionMiddleware',  # Enables session support.
-    'django.middleware.common.CommonMiddleware',      # Performs various common tasks like URL normalization.
-    'django.middleware.csrf.CsrfViewMiddleware',      # Protects against cross-site request forgery attacks.
+    'django.middleware.security.SecurityMiddleware',            # Provides security enhancements.
+    'django.contrib.sessions.middleware.SessionMiddleware',     # Enables session support.
+    'django.middleware.common.CommonMiddleware',                # Performs various common tasks like URL normalization.
+    'django.middleware.csrf.CsrfViewMiddleware',                # Protects against cross-site request forgery attacks.
     'django.contrib.auth.middleware.AuthenticationMiddleware',  # Associates users with requests using sessions.
-    'django.contrib.messages.middleware.MessageMiddleware',  # Enables message support.
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',  # Protects against clickjacking attacks.
+    'django.contrib.messages.middleware.MessageMiddleware',     # Enables message support.
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',   # Protects against clickjacking attacks.
 ]
 
 # ROOT_URLCONF: A string representing the Python module that contains the project's main URL configurations (typically 'projectX.urls').
@@ -85,9 +92,23 @@ TEMPLATES = [
     },
 ]
 
-# WSGI_APPLICATION: A string pointing to the WSGI (Web Server Gateway Interface) application object that Django uses to communicate with your web server.
+# WSGI_APPLICATION: A string pointing to the WSGI () application object that Django uses to communicate with your web server.
 WSGI_APPLICATION = 'projectX.wsgi.application'
 
+# Color band for unfold admin panel extension
+UNFOLD = {
+    "SITE_TITLE": "My Custom Admin",
+    "SITE_HEADER": "Project Dashboard",
+    "COLORS": {
+        "primary": {
+            "50": "174, 221, 229",
+            "100": "15, 163, 174",
+            "500": "36, 112, 117",
+            "600": "3, 73, 81",
+            "900": "0, 49, 53",
+        },
+    },
+}
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
@@ -95,8 +116,12 @@ WSGI_APPLICATION = 'projectX.wsgi.application'
 # The 'default' key represents the primary database connection.
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',  # Specifies the database engine to use (here, SQLite).
-        'NAME': BASE_DIR / 'db.sqlite3',        # The path to the database file. SQLite stores its data in a single file.
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'weatherusers',
+        'USER': 'pape',
+        'PASSWORD': 'PaPe11good',
+        'HOST': 'localhost',  # or your PostgreSQL server IPWeb Server Gateway Interface
+        'PORT': '5432',       # default PostgreSQL port
     }
 }
 
@@ -123,7 +148,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 # These settings control Django's internationalization and localization features.
-LANGUAGE_CODE = 'en-us'  # The default language code for the project (English - United States).
+LANGUAGE_CODE = 'en-in' 
 
 TIME_ZONE = 'Asia/Kolkata'  # The default time zone for the project (set to India Standard Time).
 
@@ -142,3 +167,5 @@ STATIC_URL = '/static/'
 # DEFAULT_AUTO_FIELD: Specifies the default primary key field type for automatically created models.
 # BigAutoField is a 64-bit integer, providing more flexibility for large datasets.
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+LOGIN_REDIRECT_URL = 'home'
+LOGIN_URL = "login"

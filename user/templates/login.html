@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Login{% endblock title %}
+
+{% block container %}
+<div class="box">
+    <div class="container">
+        {% if messages %}
+        <ul class="messages">
+            {% for message in messages %}
+            <li{% if message.tags %} class="{{ message.tags }}" {% endif %}>
+                {{ message }}
+                </li>
+                {% endfor %}
+        </ul>
+        {% endif %}
+        <form class="form-section" method="post">
+            {% csrf_token %}
+            <div class="top">
+                <header>Welcome Back</header>
+            </div>
+            <div class="input-box">
+                <input type="text" class="input" placeholder="Username" name="username">
+                <i class="bx bx-user"></i>
+                <div class="input-box">
+                    <input type="password" class="input" placeholder="Password" name="password">
+                    <i class="bx bx-lock-alt"></i>
+                </div>
+                <div class="input-box">
+                    <input type="submit" class="submit" value="Login">
+                </div>
+                <div class="two-col">
+                    <div class="one">
+                        <label><a href="/signup">Don't have an account?</a></label>
+                    </div>
+                    <div class="two">
+                        <label><a href="#">Forgot Password?</a></label>
+                    </div>
+                </div>
+        </form>
+
+    </div>
+</div>
+{% endblock container %}

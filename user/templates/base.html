@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {% load static %}
+    <title>{% block title %}{% endblock title %}</title>
+    <!-- <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'> -->
+    <style>
+        /* @import url('https://fonts.googleapis.com/css2?family=Hind&family=Poppins:ital,wght@0,200;0,300;0,400;0,500;0,600;1,200&display=swap'); */
+
+        * {
+            font-family: 'Poppins', sans-serif;
+            box-sizing: border-box;
+            /* Prevents padding from changing the element's width */
+        }
+
+        body {
+            background: linear-gradient(rgba(4, 9, 30, 0.7), rgba(4, 9, 30, 0.7)), url('bg.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            margin: 0;
+            padding: 0;
+        }
+
+        .box {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 350px;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            /* Optional: adds a slight frosted glass container effect */
+            border-radius: 15px;
+            backdrop-filter: blur(5px);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+        }
+
+
+        /* Typography */
+        span {
+            color: #fff;
+            font-size: small;
+            display: flex;
+            justify-content: center;
+            padding: 5px 0;
+        }
+
+        header {
+            color: #fff;
+            font-size: 30px;
+            display: flex;
+            justify-content: center;
+            padding: 5px 0 20px 0;
+
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        /* Input Fields */
+        .input-box {
+            position: relative;
+            /* Keeps the icon positioned relative to this box */
+            margin-top: 27px;
+            margin-bottom: 27px;
+        }
+
+        .input-box .input {
+            height: 45px;
+            width: 100%;
+            border: none;
+            border-radius: 30px;
+            color: #fff;
+            font-size: 15px;
+            padding: 0 20px 0 45px;
+            background: rgba(255, 255, 255, 0.1);
+            outline: none;
+        }
+
+        /* Fixed icon positioning */
+        .input-box i {
+            position: absolute;
+            top: 50%;
+            left: 17px;
+            transform: translateY(-50%);
+            color: #fff;
+            font-size: 20px;
+        }
+
+        ::-webkit-input-placeholder {
+            color: #eee;
+        }
+
+        /* Submit Button */
+        .submit {
+            border: none;
+            border-radius: 30px;
+            font-size: 15px;
+            height: 45px;
+            outline: none;
+            width: 100%;
+            color: #000;
+            background: rgba(255, 255, 255, 0.7);
+            cursor: pointer;
+            transition: .3s;
+            margin-top: 10px;
+            font-weight: 500;
+        }
+
+        .submit:hover {
+            background: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+        }
+
+        /* Footer Links */
+        .two-col {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            color: #fff;
+            font-size: small;
+            margin-top: 15px;
+        }
+
+        .one {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .one label a {
+            text-decoration: none;
+            color: #fff;
+        }
+
+        .two label a {
+            text-decoration: none;
+            color: #fff;
+        }
+
+        .two label a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+
+<body>
+    {{ message }}
+    {% block container %}
+    {% endblock container %}
+</body>
+
+</html>
