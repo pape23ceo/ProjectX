@@ -1,0 +1,21 @@
+{
+    "python-envs.defaultEnvManager": "ms-python.python:venv",
+    "gitlens.annotations.file.hover.wholeLine": false,
+    "gitlens.annotations.line.trailing.hover.changes": false,
+    "gitlens.codeLens.recentChange.enabled": false,
+    "gitlens.annotations.file.recentChanges.hover.details": false,
+    "gitlens.annotations.file.recentChanges.hover.changes": false,
+    "gitlens.annotations.file.gutter.hover.wholeLine": false,
+    "gitlens.blame.line.enabled": false,
+    "gitlens.blame.file.lineHighlight.enabled": false,
+    "gitlens.blame.file.lineHighlight.locations": [
+        "gutter",
+        "overviewRuler"
+    ],
+    "gitlens.blame.file.annotationType": "gutter",
+    "gitlens.recentChanges.file.lineHighlight.locations": [
+        "gutter"
+    ],
+    "gitlens.annotations.line.hover.changes": false,
+    "gitlens.codeLens.authors.enabled": false
+}

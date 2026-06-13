@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Weather | MET Norway</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        li {
+            list-style: none;
+        }
+
+        body {
+            background-image: url('671984525_1502193671266234_8115291675525230612_n.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            overflow-x: hidden;
+            transition: background-color 0.2s, background-blend-mode 0.2s;
+        }
+
+        body.dark-mode {
+            background-color: rgba(0, 0, 0, 0.65);
+            background-blend-mode: overlay;
+        }
+
+        nav ul {
+            display: flex;
+            justify-content: space-between;
+            padding: 20px 20px 0;
+        }
+
+        nav a {
+            text-decoration: none;
+            color: white;
+            font-size: 28px;
+            font-weight: 300;
+            transition: opacity 0.2s;
+            cursor: pointer;
+        }
+
+        nav a:hover {
+            opacity: 0.8;
+        }
+
+        .hero {
+            min-height: 220px;
+            height: 57vh;
+            display: flex;
+            flex-direction: column;
+            padding-bottom: 16px;
+            flex-shrink: 0;
+        }
+
+        .temps {
+            margin: 20px 0 0 0;
+            padding: 0 0 0 18px;
+            line-height: 1;
+        }
+
+        .city {
+            font-size: 18pt;
+            margin-bottom: 2px;
+            opacity: 0.9;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .city-name {
+            font-weight: 500;
+        }
+
+        .city-loader {
+            font-size: 12px;
+            opacity: 0.7;
+        }
+
+        .temp-num {
+            font-size: 96px;
+            font-weight: 200;
+            letter-spacing: -4px;
+        }
+
+        .condition {
+            font-size: 13px;
+            opacity: 0.75;
+            padding-left: 2px;
+            margin-top: 2px;
+        }
+
+        .spacer {
+            flex: 1;
+        }
+
+        .scroll-hint {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 12px 0 8px;
+            opacity: 0.5;
+            font-size: 11px;
+            gap: 3px;
+        }
+
+        .arrow-down {
+            width: 0;
+            height: 0;
+            border-left: 5px solid transparent;
+            border-right: 5px solid transparent;
+            border-top: 5px solid white;
+            animation: bounce 1.2s infinite;
+        }
+
+        @keyframes bounce {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(5px);
+            }
+        }
+
+        .section {
+            padding: 0 14px 20px;
+            margin-bottom: 5vh
+        }
+
+        .section-label {
+            font-size: 11px;
+            opacity: 0.65;
+            padding: 0 4px 10px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .hours-12 {
+            display: flex;
+            gap: 6px;
+            overflow-x: auto;
+            overflow-y: hidden;
+            scrollbar-width: none;
+            padding-bottom: 4px;
+            touch-action: pan-x;
+            -webkit-overflow-scrolling: touch;
+            cursor: grab;
+        }
+
+        .hours-12:active {
+            cursor: grabbing;
+        }
+
+        .hours-12::-webkit-scrollbar {
+            display: none;
+        }
+
+        .hour-card {
+            min-width: 56px;
+            width: 17vw;
+            max-width: 80px;
+            background: rgba(255, 255, 255, 0.13);
+            border-radius: 18px;
+            padding: 10px 6px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            flex-shrink: 0;
+            user-select: none;
+            backdrop-filter: blur(2px);
+        }
+
+        .hour-card.now {
+            background: rgba(255, 255, 255, 0.28);
+        }
+
+        .hour-time {
+            font-size: 11px;
+            opacity: 0.8;
+        }
+
+        .hour-icon {
+            font-size: 16px;
+        }
+
+        .hour-temp {
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .weekly {
+            width: 100%;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.13);
+            overflow: hidden;
+            backdrop-filter: blur(2px);
+        }
+
+        .week-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .week-row:last-child {
+            border-bottom: none;
+        }
+
+        .week-row:active {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .week-day {
+            font-size: 14px;
+            width: 90px;
+        }
+
+        .week-icon {
+            font-size: 16px;
+        }
+
+        .week-temps {
+            font-size: 13px;
+            display: flex;
+            gap: 8px;
+        }
+
+        .week-hi {
+            font-weight: 500;
+        }
+
+        .week-lo {
+            opacity: 0.55;
+        }
+
+        .extra-cards {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            padding: 0 14px 20px;
+        }
+
+        .stat-mini {
+            background: rgba(255, 255, 255, 0.13);
+            border-radius: 16px;
+            padding: 14px;
+            backdrop-filter: blur(2px);
+        }
+
+        .stat-mini-label {
+            font-size: 11px;
+            opacity: 0.65;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+        }
+
+        .stat-mini-val {
+            font-size: 22px;
+            font-weight: 300;
+        }
+
+        .stat-mini-sub {
+            font-size: 12px;
+            opacity: 0.6;
+            margin-top: 3px;
+        }
+
+        .bottom-pad {
+            height: 24px;
+        }
+
+        /* Detail panel */
+        .detail-panel {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #1a7d96;
+            display: flex;
+            flex-direction: column;
+            transform: translateX(100%);
+            transition: transform 0.32s cubic-bezier(.4, 0, .2, 1);
+            overflow-y: auto;
+            scrollbar-width: none;
+            z-index: 100;
+        }
+
+        .detail-panel::-webkit-scrollbar {
+            display: none;
+        }
+
+        .detail-panel.open {
+            transform: translateX(0);
+        }
+
+        .detail-back {
+            padding: 50px 20px 10px;
+            font-size: 22px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .detail-back span {
+            font-size: 15px;
+            opacity: 0.8;
+        }
+
+        .detail-day {
+            font-size: 28px;
+            font-weight: 300;
+            padding: 0 20px 4px;
+        }
+
+        .detail-icon {
+            font-size: 72px;
+            text-align: center;
+            padding: 20px 0 10px;
+        }
+
+        .detail-temp {
+            font-size: 64px;
+            font-weight: 200;
+            text-align: center;
+            letter-spacing: -2px;
+        }
+
+        .detail-cond {
+            text-align: center;
+            opacity: 0.75;
+            font-size: 15px;
+            padding-bottom: 24px;
+        }
+
+        .detail-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            padding: 0 16px 24px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.13);
+            border-radius: 14px;
+            padding: 14px;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            opacity: 0.65;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+
+        .stat-val {
+            font-size: 20px;
+            font-weight: 400;
+        }
+
+        .button-5day {
+            color: white;
+            border: none;
+            border-radius: 50px;
+            padding: 12px 20px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            letter-spacing: 0.2px;
+            transition: background-color 0.2s;
+            margin: 12px 4px;
+            background: rgba(255, 255, 255, 0.2);
+            width: calc(100% - 8px);
+        }
+
+        .settings-panel {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #1e3b4f;
+            display: flex;
+            flex-direction: column;
+            transform: translateX(-100%);
+            transition: transform 0.3s cubic-bezier(.4, 0, .2, 1);
+            overflow-y: auto;
+            z-index: 200;
+            color: white;
+        }
+
+        .settings-panel.open {
+            transform: translateX(0);
+        }
+
+        .settings-header {
+            padding: 50px 20px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .settings-back {
+            font-size: 28px;
+            line-height: 1;
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .settings-title {
+            font-size: 24px;
+            font-weight: 300;
+        }
+
+        .settings-content {
+            padding: 24px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .setting-label {
+            font-size: 18px;
+            font-weight: 400;
+        }
+
+        .setting-control {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 30px;
+            padding: 8px 16px;
+            font-size: 16px;
+            border: none;
+            color: white;
+            cursor: pointer;
+        }
+
+        .setting-toggle {
+            width: 48px;
+            height: 26px;
+            background: rgba(255, 255, 255, 0.25);
+            border-radius: 30px;
+            display: flex;
+            align-items: center;
+            padding: 3px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .setting-toggle.active {
+            background: #4cd964;
+        }
+
+        .toggle-knob {
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.2s;
+        }
+
+        .setting-toggle.active .toggle-knob {
+            transform: translateX(22px);
+        }
+
+        .settings-footer {
+            margin-top: 30px;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 12px;
+            text-align: center;
+        }
+
+        .attribution {
+            text-align: center;
+            font-size: 10px;
+            padding: 10px;
+            opacity: 0.5;
+        }
+
+        .loading-temp {
+            opacity: 0.6;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                opacity: 0.4;
+            }
+
+            100% {
+                opacity: 0.8;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav>
+        <ul>
+            <li><a href="#" id="searchCityBtn">+</a></li>
+            <li><a href="#" id="settingsBtn" style="font-size:18px;letter-spacing:2px;">•••</a></li>
+        </ul>
+    </nav>
+
+    <div class="hero">
+        <div class="temps">
+            <div class="city">
+                <span class="city-name" id="cityName">Kolkata</span>
+                <span class="city-loader" id="cityLoader"></span>
+            </div>
+            <div class="temp-num" id="mainTemp">—°</div>
+            <div class="condition" id="mainCondition">Loading forecast...</div>
+        </div>
+        <div class="spacer"></div>
+    </div>
+
+    <div class="section">
+        <div class="section-label">7-day forecast</div>
+        <div class="weekly" id="weeklyContainer">
+            <div class="week-row" style="justify-content:center;">Loading weekly...</div>
+        </div>
+        <button class="button-5day" id="showAllBtn">Detailed forecast</button>
+    </div>
+
+    <div class="section">
+        <div class="section-label">Hourly forecast</div>
+        <div class="hours-12" id="hourlyContainer">
+            <div class="hour-card">Loading...</div>
+        </div>
+    </div>
+
+    <div class="extra-cards" id="extraStatsContainer">
+        <!-- populated by js -->
+    </div>
+
+    <div class="bottom-pad"></div>
+    <div class="attribution">🌦 Weather data from MET Norway</div>
+
+    <!-- Detail panel -->
+    <div class="detail-panel" id="detailPanel">
+        <div class="detail-back" onclick="closeDetail()"><span>← Back</span></div>
+        <div class="detail-day" id="dDay"></div>
+        <div class="detail-icon" id="dIcon"></div>
+        <div class="detail-temp" id="dTemp"></div>
+        <div class="detail-cond" id="dCond"></div>
+        <div class="detail-stats">
+            <div class="stat-card">
+                <div class="stat-label">Humidity</div>
+                <div class="stat-val" id="dHumid"></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Wind</div>
+                <div class="stat-val" id="dWind"></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Low / High</div>
+                <div class="stat-val" id="dLoHi"></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Pressure</div>
+                <div class="stat-val" id="dPress"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings panel -->
+    <div class="settings-panel" id="settingsPanel">
+        <div class="settings-header">
+            <div class="settings-back" onclick="closeSettings()">←</div>
+            <div class="settings-title">Settings</div>
+        </div>
+        <div class="settings-content">
+            <div class="setting-item">
+                <span class="setting-label">Temperature unit</span>
+                <select id="unitSelect" class="setting-control">
+                    <option value="c" selected>°C</option>
+                    <option value="f">°F</option>
+                </select>
+            </div>
+            <div class="setting-item">
+                <span class="setting-label">Dark mode</span>
+                <div class="setting-toggle" id="darkToggle" onclick="toggleDarkMode()">
+                    <div class="toggle-knob"></div>
+                </div>
+            </div>
+            <div class="setting-item">
+                <span class="setting-label">Notifications</span>
+                <div class="setting-toggle active" onclick="toggleSetting(this)">
+                    <div class="toggle-knob"></div>
+                </div>
+            </div>
+            <div class="setting-item">
+                <span class="setting-label">12-hour format</span>
+                <div class="setting-toggle active" onclick="toggleSetting(this)">
+                    <div class="toggle-knob"></div>
+                </div>
+            </div>
+            <div class="settings-footer">
+                <div>v2.0 · MET Norway API</div>
+                <div style="margin-top:6px;">📍 Real-time weather</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ---------- GLOBAL STATE ----------
+        let currentWeatherData = null;        // raw timeseries
+        let currentCoords = { lat: 22.5726, lon: 88.3639 }; // Kolkata default
+        let currentCityName = "Kolkata";
+        let currentUnit = "c";                // 'c' or 'f'
+        let celsiusCache = {
+            mainTemp: null,
+            feelsLike: null,
+            hourlyList: [],      // { timeLocal, tempC, symbolCode }
+            dailyForecast: []    // { weekday, date, highC, lowC, symbolCode, details }
+        };
+
+        // DOM elements
+        const cityNameEl = document.getElementById("cityName");
+        const mainTempEl = document.getElementById("mainTemp");
+        const mainConditionEl = document.getElementById("mainCondition");
+        const weeklyContainer = document.getElementById("weeklyContainer");
+        const hourlyContainer = document.getElementById("hourlyContainer");
+        const extraStatsContainer = document.getElementById("extraStatsContainer");
+        const unitSelect = document.getElementById("unitSelect");
+        const searchBtn = document.getElementById("searchCityBtn");
+        const showAllBtn = document.getElementById("showAllBtn");
+
+        // Helper: map MET symbol_code to emoji
+        function symbolToEmoji(symbol) {
+            if (!symbol) return "🌡️";
+            const s = symbol.toLowerCase();
+            if (s.includes("clearsky")) return "☀️";
+            if (s.includes("fair")) return "🌤️";
+            if (s.includes("partlycloudy")) return "⛅";
+            if (s.includes("cloudy")) return "☁️";
+            if (s.includes("rain") && s.includes("light")) return "🌦️";
+            if (s.includes("rain")) return "🌧️";
+            if (s.includes("sleet")) return "🌨️";
+            if (s.includes("snow")) return "❄️";
+            if (s.includes("thunder")) return "⛈️";
+            if (s.includes("fog")) return "🌫️";
+            return "🌥️";
+        }
+
+        // Format time to local hour (12/24 based on setting, but for hourly we show like "13:00" or "1pm")
+        function formatHourLocal(isoString, use12h = false) {
+            const date = new Date(isoString);
+            let hours = date.getHours();
+            if (use12h) {
+                const ampm = hours >= 12 ? 'pm' : 'am';
+                hours = hours % 12 || 12;
+                return `${hours}${ampm}`;
+            }
+            return `${hours.toString().padStart(2, '0')}:00`;
+        }
+
+        // Convert Celsius based on unit
+        function formatTemp(celsius, unit) {
+            if (celsius === undefined || celsius === null) return "—";
+            if (unit === 'f') {
+                const f = (celsius * 9 / 5) + 32;
+                return Math.round(f) + "°";
+            }
+            return Math.round(celsius) + "°";
+        }
+
+        // Fetch MET API
+        async function fetchMETWeather(lat, lon) {
+            const url = `https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=${lat}&lon=${lon}`;
+            const response = await fetch(url, {
+                headers: { 'User-Agent': 'WeatherApp/1.0 (github.com/weather-demo)' }
+            });
+            if (!response.ok) throw new Error(`MET API error: ${response.status}`);
+            const data = await response.json();
+            return data;
+        }
+
+        // Process timeseries -> current, hourly, daily
+        function processWeatherData(timeseries, timezoneOffsetMinutes = new Date().getTimezoneOffset()) {
+            if (!timeseries || timeseries.length === 0) throw new Error("No data");
+            const now = new Date();
+            let currentEntry = null;
+            let hourlyEntries = [];
+            const dailyMap = new Map(); // key: YYYY-MM-DD
+
+            for (let entry of timeseries) {
+                const time = new Date(entry.time);
+                const details = entry.data?.instant?.details;
+                if (!details) continue;
+
+                const tempC = details.air_temperature;
+                const humidity = details.relative_humidity;
+                const windSpeed = details.wind_speed;
+                const windDir = details.wind_from_direction;
+                const pressure = details.air_pressure_at_sea_level;
+                const cloud = details.cloud_area_fraction;
+                const symbolCode = entry.data?.next_1_hours?.summary?.symbol_code ||
+                    entry.data?.next_6_hours?.summary?.symbol_code ||
+                    "partlycloudy_day";
+
+                // Current (closest to now)
+                if (!currentEntry || Math.abs(time - now) < Math.abs(new Date(currentEntry.time) - now)) {
+                    currentEntry = { time, tempC, humidity, windSpeed, windDir, pressure, cloud, symbolCode, feelsLike: tempC };
+                }
+
+                // Hourly: next 24h but we limit later (12 shown)
+                if (time >= now) {
+                    hourlyEntries.push({ time, tempC, symbolCode, humidity, windSpeed });
+                }
+
+                // Daily grouping (local date)
+                const localDate = time.toLocaleDateString('en-CA'); // YYYY-MM-DD
+                if (!dailyMap.has(localDate)) {
+                    dailyMap.set(localDate, { temps: [], symbolCounts: {}, details: { humidity, windSpeed, pressure } });
+                }
+                const day = dailyMap.get(localDate);
+                day.temps.push(tempC);
+                const sym = symbolCode;
+                day.symbolCounts[sym] = (day.symbolCounts[sym] || 0) + 1;
+            }
+
+            if (!currentEntry) throw new Error("No current weather");
+
+            // Hourly next 12 (excluding current hour maybe but we show upcoming)
+            const nextHours = hourlyEntries.slice(1, 13);
+            const hourlyList = nextHours.map(h => ({
+                timeLocal: h.time,
+                tempC: h.tempC,
+                symbolCode: h.symbolCode
+            }));
+
+            // Daily aggregates
+            const dailyForecast = [];
+            for (let [dateStr, data] of dailyMap.entries()) {
+                const minTemp = Math.min(...data.temps);
+                const maxTemp = Math.max(...data.temps);
+                let dominantSymbol = "partlycloudy_day";
+                let maxCount = 0;
+                for (let [sym, cnt] of Object.entries(data.symbolCounts)) {
+                    if (cnt > maxCount) { maxCount = cnt; dominantSymbol = sym; }
+                }
+                const weekday = new Date(dateStr).toLocaleDateString(undefined, { weekday: 'long' });
+                dailyForecast.push({
+                    date: dateStr,
+                    weekday,
+                    highC: maxTemp,
+                    lowC: minTemp,
+                    symbolCode: dominantSymbol,
+                    details: data.details
+                });
+            }
+            dailyForecast.sort((a, b) => new Date(a.date) - new Date(b.date));
+            const sevenDays = dailyForecast.slice(0, 7);
+
+            return { current: currentEntry, hourlyList, dailyForecast: sevenDays };
+        }
+
+        // Render everything based on cached celsius data + current unit
+        function renderAll() {
+            if (!celsiusCache.mainTemp) return;
+            // Main hero
+            mainTempEl.innerText = formatTemp(celsiusCache.mainTemp, currentUnit);
+            mainConditionEl.innerText = celsiusCache.conditionText || "Live from MET Norway";
+            cityNameEl.innerText = currentCityName;
+
+            // Hourly
+            if (celsiusCache.hourlyList.length) {
+                const use12h = false; // keep 24h for simplicity but respects style
+                hourlyContainer.innerHTML = celsiusCache.hourlyList.map((h, idx) => {
+                    const hourLabel = formatHourLocal(h.timeLocal, false);
+                    const isNow = idx === 0 && new Date(h.timeLocal).getHours() === new Date().getHours();
+                    return `<div class="hour-card ${isNow ? 'now' : ''}">
+                            <span class="hour-time">${hourLabel}</span>
+                            <span class="hour-icon">${symbolToEmoji(h.symbolCode)}</span>
+                            <span class="hour-temp">${formatTemp(h.tempC, currentUnit)}</span>
+                        </div>`;
+                }).join('');
+            } else {
+                hourlyContainer.innerHTML = '<div class="hour-card">No hourly data</div>';
+            }
+
+            // Weekly forecast
+            if (celsiusCache.dailyForecast.length) {
+                weeklyContainer.innerHTML = celsiusCache.dailyForecast.map(day => `
+                <div class="week-row" data-day='${JSON.stringify(day)}'>
+                    <span class="week-day">${day.weekday}</span>
+                    <span class="week-icon">${symbolToEmoji(day.symbolCode)}</span>
+                    <span class="week-temps">
+                        <span class="week-hi">${formatTemp(day.highC, currentUnit)}</span>
+                        <span class="week-lo">${formatTemp(day.lowC, currentUnit)}</span>
+                    </span>
+                </div>
+            `).join('');
+                // attach click events to each row for detail panel
+                document.querySelectorAll('.week-row').forEach(row => {
+                    row.addEventListener('click', (e) => {
+                        const dayData = JSON.parse(row.getAttribute('data-day'));
+                        openDetailForDay(dayData);
+                    });
+                });
+            } else {
+                weeklyContainer.innerHTML = '<div class="week-row">No forecast</div>';
+            }
+
+            // Extra stats cards (humidity, wind, pressure, cloud cover)
+            if (celsiusCache.extraStats) {
+                const s = celsiusCache.extraStats;
+                extraStatsContainer.innerHTML = `
+                <div class="stat-mini"><div class="stat-mini-label">Humidity</div><div class="stat-mini-val">${s.humidity}%</div><div class="stat-mini-sub">${s.humidity > 70 ? 'High' : 'Moderate'}</div></div>
+                <div class="stat-mini"><div class="stat-mini-label">Wind</div><div class="stat-mini-val">${s.windSpeed} km/h</div><div class="stat-mini-sub">${s.windDir}</div></div>
+                <div class="stat-mini"><div class="stat-mini-label">Pressure</div><div class="stat-mini-val">${s.pressure} hPa</div><div class="stat-mini-sub">Sea level</div></div>
+                <div class="stat-mini"><div class="stat-mini-label">Cloud cover</div><div class="stat-mini-val">${s.cloud}%</div><div class="stat-mini-sub">${s.cloud < 30 ? 'Clear' : s.cloud < 70 ? 'Scattered' : 'Overcast'}</div></div>
+            `;
+            }
+        }
+
+        // Load weather by coordinates
+        async function loadWeather(lat, lon, cityLabel = null) {
+            try {
+                mainTempEl.innerText = "—°";
+                mainConditionEl.innerText = "Fetching forecast...";
+                weeklyContainer.innerHTML = '<div class="week-row">Loading 7-day...</div>';
+                hourlyContainer.innerHTML = '<div class="hour-card">Loading hourly...</div>';
+
+                const data = await fetchMETWeather(lat, lon);
+                if (!data.properties?.timeseries) throw new Error("Invalid API response");
+                const processed = processWeatherData(data.properties.timeseries);
+
+                const current = processed.current;
+                const mainTempC = current.tempC;
+                const conditionSymbol = current.symbolCode;
+                const conditionText = conditionSymbol.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+
+                // Update celsius cache
+                celsiusCache.mainTemp = mainTempC;
+                celsiusCache.conditionText = `${symbolToEmoji(conditionSymbol)} ${conditionText} · Feels like ${Math.round(current.tempC)}°C`;
+                celsiusCache.hourlyList = processed.hourlyList;
+                celsiusCache.dailyForecast = processed.dailyForecast;
+                celsiusCache.extraStats = {
+                    humidity: Math.round(current.humidity),
+                    windSpeed: Math.round(current.windSpeed || 0),
+                    windDir: current.windDir ? `${Math.round(current.windDir)}°` : 'N/A',
+                    pressure: Math.round(current.pressure || 1013),
+                    cloud: Math.round(current.cloud || 0)
+                };
+
+                if (cityLabel) currentCityName = cityLabel;
+                else if (!currentCityName || currentCityName === "Kolkata") currentCityName = cityLabel || "Kolkata";
+
+                renderAll();
+            } catch (err) {
+                console.error(err);
+                mainConditionEl.innerText = "⚠️ Weather data error";
+                weeklyContainer.innerHTML = '<div class="week-row">Failed to load forecast</div>';
+                hourlyContainer.innerHTML = '<div class="hour-card">Error</div>';
+            }
+        }
+
+        // Geocode city name using Nominatim
+        async function geocodeCity(cityName) {
+            const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(cityName)}&format=json&limit=1`;
+            const res = await fetch(url, { headers: { 'User-Agent': 'WeatherApp/1.0' } });
+            const data = await res.json();
+            if (!data.length) throw new Error("City not found");
+            return { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon), displayName: data[0].display_name.split(',')[0] };
+        }
+
+        // Search city handler
+        async function searchCity() {
+            const cityInput = prompt("Enter city name (e.g., London, Paris, Tokyo):", currentCityName);
+            if (!cityInput) return;
+            try {
+                const { lat, lon, displayName } = await geocodeCity(cityInput);
+                currentCoords = { lat, lon };
+                currentCityName = displayName;
+                await loadWeather(lat, lon, displayName);
+            } catch (err) {
+                alert(`Could not find city: ${cityInput}`);
+            }
+        }
+
+        // Detail panel for specific day
+        function openDetailForDay(day) {
+            document.getElementById("dDay").innerText = day.weekday;
+            document.getElementById("dIcon").innerHTML = symbolToEmoji(day.symbolCode);
+            const highFmt = formatTemp(day.highC, currentUnit);
+            const lowFmt = formatTemp(day.lowC, currentUnit);
+            document.getElementById("dTemp").innerText = highFmt;
+            document.getElementById("dCond").innerText = day.symbolCode.replace(/_/g, ' ');
+            document.getElementById("dHumid").innerText = day.details?.humidity ? `${Math.round(day.details.humidity)}%` : "—";
+            document.getElementById("dWind").innerText = day.details?.windSpeed ? `${Math.round(day.details.windSpeed)} km/h` : "—";
+            document.getElementById("dLoHi").innerText = `${lowFmt} / ${highFmt}`;
+            document.getElementById("dPress").innerText = day.details?.pressure ? `${Math.round(day.details.pressure)} hPa` : "—";
+            document.getElementById("detailPanel").classList.add("open");
+        }
+
+        function closeDetail() {
+            document.getElementById("detailPanel").classList.remove("open");
+        }
+
+        function closeSettings() {
+            document.getElementById("settingsPanel").classList.remove("open");
+        }
+
+        function toggleDarkMode() {
+            document.body.classList.toggle("dark-mode");
+            const toggle = document.getElementById("darkToggle");
+            toggle.classList.toggle("active");
+        }
+        function toggleSetting(el) { el.classList.toggle("active"); }
+
+        // Unit change listener
+        unitSelect.addEventListener("change", (e) => {
+            currentUnit = e.target.value;
+            renderAll();
+        });
+
+        // Settings panel open
+        document.getElementById("settingsBtn").addEventListener("click", () => {
+            document.getElementById("settingsPanel").classList.add("open");
+        });
+        searchBtn.addEventListener("click", searchCity);
+        showAllBtn.addEventListener("click", () => {
+            if (celsiusCache.dailyForecast.length) {
+                const firstDay = celsiusCache.dailyForecast[0];
+                openDetailForDay(firstDay);
+            }
+        });
+
+        // Initialize default location (Kolkata)
+        loadWeather(22.5726, 88.3639, "Kolkata");
+
+        // Hourly drag scroll (restore)
+        const hourlyScroll = document.getElementById("hourlyContainer");
+        let isDown = false, startX, scrollLeft;
+        hourlyScroll.addEventListener('mousedown', (e) => { isDown = true; startX = e.pageX - hourlyScroll.offsetLeft; scrollLeft = hourlyScroll.scrollLeft; hourlyScroll.style.cursor = 'grabbing'; });
+        window.addEventListener('mouseup', () => { isDown = false; hourlyScroll.style.cursor = 'grab'; });
+        window.addEventListener('mousemove', (e) => { if (!isDown) return; e.preventDefault(); const x = e.pageX - hourlyScroll.offsetLeft; hourlyScroll.scrollLeft = scrollLeft - (x - startX); });
+    </script>
+</body>
+
+</html>

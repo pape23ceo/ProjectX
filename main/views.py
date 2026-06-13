@@ -1,10 +1,10 @@
 # --- Importing important files and modules ---
 from django.shortcuts import render
 from django.http import HttpResponse
-from . import database
-from django.contrib.auth.decorators import login_required
+from . import weather_api
+# from django.contrib.auth.decorators import login_required
 
-@login_required
+# @login_required
 def home(request):
     # Initialize default values
     context = {
@@ -27,7 +27,7 @@ def home(request):
         if weather_location_code:
             try:
                 contry_code, pin_code = weather_location_code.split(",")
-                x = database.Weather(country_code=contry_code, city_code=pin_code)
+                x = weather_api.Weather(country_code=contry_code, city_code=pin_code)
 
                 air_temperature, relative_humidity, wind_speed, _, symbol , hours_temp, weekly= x.weather_data()
                 feels_like = x.feels_like_temperature()

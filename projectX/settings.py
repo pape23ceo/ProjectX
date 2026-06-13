@@ -1,6 +1,5 @@
 import os
 from dotenv import load_dotenv
-
 load_dotenv() # Load variables from a .env file
 """
 Django settings for projectX project.
@@ -42,12 +41,15 @@ DEBUG = True
 # ALLOWED_HOSTS: A list of strings representing the host/domain names that this Django site can serve.
 # It prevents HTTP Host header attacks. In production, you should list your actual domain names and IPs.
 ALLOWED_HOSTS = ['*']
-
+# Tells Django to look for this header to know if the request is HTTPS
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # Application definition
 # INSTALLED_APPS: A list of strings naming all the Django applications that are active in this project.
 # Django comes with several built-in apps (like admin, auth, etc.), and you'll add your own here.
 INSTALLED_APPS = [
+    'admin_tools_stats', # This is a third-party app that provides statistical insights and visualizations for the Django admin interface. It can help you analyze data and monitor the performance of your application directly from the admin dashboard.
+    'django_nvd3', # This is a third-party app for rendering NVD3 charts in Django templates. It allows you to create interactive charts using the NVD3 JavaScript library, which is built on top of D3.js. This can be particularly useful for visualizing weather data in your application.
     "unfold", # This is custom admin panel extension for dajngo this help to imporve the quality of work flow
     'customadmin.apps.CustomadminConfig', # Your 'customadmin' application. The '.apps.CustomadminConfig' specifies the configuration class.
     'user.apps.UserConfig',              # Your 'user' application. The '.apps.UserConfig' specifies the configuration class.
@@ -97,15 +99,19 @@ WSGI_APPLICATION = 'projectX.wsgi.application'
 
 # Color band for unfold admin panel extension
 UNFOLD = {
-    "SITE_TITLE": "My Custom Admin",
-    "SITE_HEADER": "Project Dashboard",
     "COLORS": {
         "primary": {
-            "50": "174, 221, 229",
-            "100": "15, 163, 174",
-            "500": "36, 112, 117",
-            "600": "3, 73, 81",
-            "900": "0, 49, 53",
+            "50": "250 245 255",   # Decimal RGB values
+            "100": "243 232 255",
+            "200": "233 213 252",
+            "300": "216 180 254",
+            "400": "192 132 252",
+            "500": "168 85 247",   # Core accent color
+            "600": "147 51 234",
+            "700": "126 34 206",
+            "800": "107 33 168",
+            "900": "88 28 135",
+            "950": "59 7 100",
         },
     },
 }
@@ -117,15 +123,24 @@ UNFOLD = {
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'weatherusers',
-        'USER': 'pape',
+        'NAME': 'weather_application_database',
+        'USER': 'priyanshu',
         'PASSWORD': 'PaPe11good',
         'HOST': 'localhost',  # or your PostgreSQL server IPWeb Server Gateway Interface
         'PORT': '5432',       # default PostgreSQL port
     }
 }
 
-
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.db.DatabaseCache",
+        "LOCATION": "django_api_cache",  # The name of the SQL table Django will create
+        "TIMEOUT": 600,                  # Default expiration time in seconds (10 mins)
+        "OPTIONS": {
+            "MAX_ENTRIES": 500000         # Maximum number of keys before purging old ones
+        }
+    }
+}
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
 # AUTH_PASSWORD_VALIDATORS: A list of dictionaries specifying the password validation rules that Django will enforce.

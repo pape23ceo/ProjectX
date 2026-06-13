@@ -1,0 +1,7 @@
+upgrade django panel and show user like statistics of most country user and etc
+create a reliable authentication system which only need name email and password and verify it by sending a login notice to email
+make a local cache in webpage that can store a weather data for 1 hour in user browser as cookies until or unless someone tap refresh  
+create a good looking ui have drak mode to light mode toggle in weather website
+automatic location locator 
+autocomplete for city name in search panel
+                                                                                              
