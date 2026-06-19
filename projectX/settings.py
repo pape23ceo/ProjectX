@@ -1,5 +1,6 @@
 import os
 from dotenv import load_dotenv
+import pickle
 load_dotenv() # Load variables from a .env file
 """
 Django settings for projectX project.
@@ -48,9 +49,10 @@ SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 # INSTALLED_APPS: A list of strings naming all the Django applications that are active in this project.
 # Django comes with several built-in apps (like admin, auth, etc.), and you'll add your own here.
 INSTALLED_APPS = [
-    'admin_tools_stats', # This is a third-party app that provides statistical insights and visualizations for the Django admin interface. It can help you analyze data and monitor the performance of your application directly from the admin dashboard.
+    'django_otp',
+    'django_otp.plugins.otp_email',
     'django_nvd3', # This is a third-party app for rendering NVD3 charts in Django templates. It allows you to create interactive charts using the NVD3 JavaScript library, which is built on top of D3.js. This can be particularly useful for visualizing weather data in your application.
-    "unfold", # This is custom admin panel extension for dajngo this help to imporve the quality of work flow
+    # "unfold", # This is custom admin panel extension for dajngo this help to imporve the quality of work flow
     'customadmin.apps.CustomadminConfig', # Your 'customadmin' application. The '.apps.CustomadminConfig' specifies the configuration class.
     'user.apps.UserConfig',              # Your 'user' application. The '.apps.UserConfig' specifies the configuration class.
     'main.apps.MainConfig',              # Your 'services' application. The '.apps.ServicesConfig' specifies the configuration class.
@@ -65,6 +67,15 @@ INSTALLED_APPS = [
 # MIDDLEWARE: A list of middleware classes that are executed in order for each request and response in your Django application.
 # Middleware can perform various tasks like security checks, session handling, and request/response processing.
 MIDDLEWARE = [
+    
+    'django.middleware.security.SecurityMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.common.CommonMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    
+    # CRITICAL: Must be placed directly after AuthenticationMiddleware
+    'django_otp.middleware.OTPMiddleware',
     'django.middleware.security.SecurityMiddleware',            # Provides security enhancements.
     'django.contrib.sessions.middleware.SessionMiddleware',     # Enables session support.
     'django.middleware.common.CommonMiddleware',                # Performs various common tasks like URL normalization.
@@ -76,7 +87,7 @@ MIDDLEWARE = [
 
 # ROOT_URLCONF: A string representing the Python module that contains the project's main URL configurations (typically 'projectX.urls').
 ROOT_URLCONF = 'projectX.urls'
-
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 # TEMPLATES: A list of dictionaries defining how Django should load and render templates.
 TEMPLATES = [
     {
@@ -135,9 +146,10 @@ CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.db.DatabaseCache",
         "LOCATION": "django_api_cache",  # The name of the SQL table Django will create
-        "TIMEOUT": 600,                  # Default expiration time in seconds (10 mins)
+        "TIMEOUT": 6000,                  # Default expiration time in seconds (1 hour and 40 minutes)
         "OPTIONS": {
-            "MAX_ENTRIES": 500000         # Maximum number of keys before purging old ones
+            "MAX_ENTRIES": 1000000,         # Maximum number of keys before purging old ones
+            "PICKLE_VERSION": pickle.HIGHEST_PROTOCOL,  # Use the highest pickle protocol for better performance and security
         }
     }
 }
@@ -159,6 +171,10 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+OTP_EMAIL_SUBJECT = "Your Security Verification Code"
+OTP_EMAIL_TOKEN_VALIDITY = 300       # Code expires automatically after 5 minutes
+OTP_EMAIL_COOLDOWN_DURATION = 60     # Users must wait 60 seconds before requesting a resend
+OTP_EMAIL_THROTTLE_FACTOR = 1        # Automatically delays malicious brute-force attempts
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/

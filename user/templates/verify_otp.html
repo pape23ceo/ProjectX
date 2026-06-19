@@ -1,0 +1,10 @@
+<h2>Verify Your Email</h2>
+<p>We've sent a 6-digit code to your email address. It will expire in 5 minutes.</p>
+<form method="POST">
+    {% if messages %}
+        {% for message in messages %} <p style="color: red;">{{ message }}</p> {% endfor %}
+    {% endif %}
+    {% csrf_token %}
+    <input type="text" name="otp" placeholder="Enter 6-digit OTP" maxlength="6" required><br><br>
+    <button type="submit">Verify Code</button>
+</form>
