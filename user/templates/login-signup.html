@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sign In · Your Adventure</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/htmx/1.9.12/htmx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/alpinejs/3.13.10/cdn.min.js" defer></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            display: ['Space Grotesk', 'sans-serif'],
+            body: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            cosmos: {
+              900: '#0a0718',
+              800: '#110e2a',
+              700: '#1c1640',
+              600: '#2a2060',
+            },
+            nebula: {
+              500: '#7c3aed',
+              400: '#9d5af5',
+              300: '#b87fff',
+            },
+            starlight: '#e8e0ff',
+          },
+          backgroundImage: {
+            'galaxy': 'radial-gradient(ellipse at 20% 50%, #1c0f45 0%, #0a0718 60%)',
+            'planet-glow': 'radial-gradient(circle, #3b1fa8 0%, #1a0a40 60%, transparent 80%)',
+          },
+          animation: {
+            'twinkle': 'twinkle 3s ease-in-out infinite',
+            'float': 'float 6s ease-in-out infinite',
+            'comet': 'comet 8s linear infinite',
+            'orbit': 'orbit 20s linear infinite',
+          },
+          keyframes: {
+            twinkle: { '0%,100%': { opacity: 0.2 }, '50%': { opacity: 1 } },
+            float: { '0%,100%': { transform: 'translateY(0px)' }, '50%': { transform: 'translateY(-18px)' } },
+            comet: {
+              '0%': { transform: 'translate(0,0) rotate(-45deg)', opacity: 1 },
+              '100%': { transform: 'translate(-300px,300px) rotate(-45deg)', opacity: 0 }
+            },
+            orbit: { '0%': { transform: 'rotate(0deg) translateX(60px) rotate(0deg)' }, '100%': { transform: 'rotate(360deg) translateX(60px) rotate(-360deg)' } },
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    h1,h2,h3,label { font-family: 'Space Grotesk', sans-serif; }
+
+    /* Stars canvas */
+    .star { position: absolute; border-radius: 50%; background: white; }
+
+    /* Auth panel glass */
+    .glass {
+      background: rgba(28, 22, 64, 0.72);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(124, 58, 237, 0.25);
+    }
+
+    /* Custom input */
+    .input-field {
+      background: rgba(10, 7, 24, 0.6);
+      border: 1px solid rgba(124, 58, 237, 0.35);
+      color: #e8e0ff;
+      transition: border-color 0.25s, box-shadow 0.25s;
+    }
+    .input-field:focus {
+      outline: none;
+      border-color: #9d5af5;
+      box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.2);
+    }
+    .input-field::placeholder { color: rgba(232, 224, 255, 0.35); }
+
+    /* Social buttons */
+    .btn-social {
+      background: rgba(10, 7, 24, 0.5);
+      border: 1px solid rgba(124, 58, 237, 0.3);
+      color: #e8e0ff;
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .btn-social:hover {
+      background: rgba(124, 58, 237, 0.15);
+      border-color: rgba(124, 58, 237, 0.6);
+    }
+
+    /* Purple CTA */
+    .btn-primary {
+      background: linear-gradient(135deg, #7c3aed 0%, #9d5af5 100%);
+      box-shadow: 0 4px 24px rgba(124, 58, 237, 0.45);
+      transition: box-shadow 0.2s, transform 0.15s;
+    }
+    .btn-primary:hover {
+      box-shadow: 0 6px 30px rgba(124, 58, 237, 0.65);
+      transform: translateY(-1px);
+    }
+    .btn-primary:active { transform: translateY(0); }
+
+    /* HTMX loading indicator */
+    .htmx-indicator { display: none; }
+    .htmx-request .htmx-indicator { display: inline-block; }
+    .htmx-request.htmx-indicator { display: inline-block; }
+
+    /* Planet rings */
+    .ring {
+      border: 2px solid rgba(156, 122, 255, 0.25);
+      border-radius: 50%;
+      position: absolute;
+    }
+
+    /* Floating nebula blobs */
+    .nebula-blob {
+      border-radius: 50%;
+      filter: blur(60px);
+      pointer-events: none;
+    }
+
+
+  </style>
+</head>
+
+<body class="min-h-screen overflow-x-hidden" style="background: #0a0718;" x-data="authApp()" x-init="init()">
+
+  <!-- ═══════════════ SPACE BACKGROUND ═══════════════ -->
+  <div class="fixed inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
+
+    <!-- Nebula blobs -->
+    <div class="nebula-blob absolute w-96 h-96 opacity-30"
+         style="background:#3b1fa8; top:-10%; left:-5%;"></div>
+    <div class="nebula-blob absolute w-80 h-80 opacity-20"
+         style="background:#6b21a8; bottom:5%; right:-8%;"></div>
+    <div class="nebula-blob absolute w-64 h-64 opacity-15"
+         style="background:#4c1d95; top:40%; left:30%;"></div>
+
+    <!-- Large planet -->
+    <div class="animate-float absolute"
+         style="width:380px;height:380px;border-radius:50%;
+                background:radial-gradient(circle at 35% 35%, #4a28b8, #1a0a40 65%);
+                top:-80px; left:-60px; opacity:0.85;">
+      <!-- Planet ring -->
+      <div class="ring" style="width:520px;height:160px;top:110px;left:-70px;transform:rotate(-20deg);"></div>
+    </div>
+
+    <!-- Small moon -->
+    <div class="animate-float absolute"
+         style="animation-delay:2s;width:100px;height:100px;border-radius:50%;
+                background:radial-gradient(circle at 35% 30%, #7c6db5, #2d1f60);
+                top:45%; left:18%; opacity:0.75;"></div>
+
+    <!-- Tiny distant planet right -->
+    <div class="animate-float absolute"
+         style="animation-delay:4s;width:60px;height:60px;border-radius:50%;
+                background:radial-gradient(circle at 40% 35%, #9d6aff, #3b1880);
+                top:60%; right:8%; opacity:0.5;"></div>
+
+    <!-- Stars (JS-generated below) -->
+    <div id="stars-container" class="absolute inset-0"></div>
+
+    <!-- Comet -->
+    <div class="absolute animate-comet"
+         style="width:120px;height:2px;
+                background:linear-gradient(90deg,white,transparent);
+                top:18%;right:25%;opacity:0.7;border-radius:2px;"></div>
+    <div class="absolute animate-comet"
+         style="animation-delay:5s;width:80px;height:1.5px;
+                background:linear-gradient(90deg,#c4b5fd,transparent);
+                top:35%;right:55%;opacity:0.5;border-radius:2px;"></div>
+
+    <!-- Left side tagline (hidden on mobile) -->
+    <div class="hidden lg:flex flex-col justify-end absolute bottom-16 left-10 max-w-xs">
+      <p class="text-xs font-medium tracking-widest uppercase mb-3" style="color:#7c6db5;">Your Universe Awaits</p>
+      <h2 class="font-display font-bold leading-tight" style="font-size:2.2rem;color:#e8e0ff;">
+        Sign in to your<br>
+        <span style="color:#9d5af5;">adventure.</span>
+      </h2>
+    </div>
+  </div>
+
+  <!-- ═══════════════ MAIN LAYOUT ═══════════════ -->
+  <div class="relative min-h-screen flex items-center justify-center px-4 py-12">
+
+    <!-- AUTH CARD -->
+    <div class="glass rounded-2xl w-full max-w-md p-8 sm:p-10 relative z-10 shadow-2xl">
+
+      <!-- Logo / Brand -->
+      <div class="flex items-center gap-2 mb-8">
+        <div class="w-7 h-7 rounded-full flex items-center justify-center"
+             style="background:linear-gradient(135deg,#7c3aed,#9d5af5);">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M7 1L9 5.5H13.5L10 8.5L11.5 13L7 10.5L2.5 13L4 8.5L0.5 5.5H5L7 1Z" fill="white"/>
+          </svg>
+        </div>
+        <span class="font-display font-semibold text-sm tracking-wide" style="color:#e8e0ff;">cosmos</span>
+      </div>
+
+      <!-- Heading -->
+      <div class="mb-8">
+        <h2 class="font-display font-bold text-2xl mb-1" style="color:#e8e0ff;" x-text="tab === 'signin' ? 'Sign In' : 'Sign Up'"></h2>
+        <p class="text-sm" style="color:#8b7dc0;">
+          <span>
+            Don't have an account?
+            <button onclick="window.location.href='{% url \'signup\' %}'" class="font-semibold transition-colors hover:underline"
+                    style="color:#9d5af5;">Sign up </button>
+          </span>
+        </p>
+      </div>
+
+        <!-- Feedback banner -->
+        <div x-show="message" x-transition
+             :class="isError ? 'bg-red-900/40 border-red-500/40 text-red-300' : 'bg-emerald-900/40 border-emerald-500/40 text-emerald-300'"
+             class="rounded-lg border px-4 py-3 text-sm mb-4 font-body" x-text="message"></div>
+
+        <!-- HTMX simulated form — swaps #auth-result -->
+        <form id="signin-form" hx-post="{% url 'login' %}" hx-target="#auth-result"
+          @htmx:before-request="loading = true; clearMessages()" @htmx:after-request="loading = false" class="space-y-4">
+          {% csrf_token %}
+        
+          <div id="auth-result" class="hidden"></div>
+        
+          <div class="relative">
+            <div class="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(139,125,192,0.7)" stroke-width="2">
+                <rect x="2" y="4" width="20" height="16" rx="2" />
+                <path d="m22 7-10 7L2 7" />
+              </svg>
+            </div>
+            <input  placeholder="yourname@gmail.com" x-model="signInEmail"
+              class="input-field w-full rounded-xl py-3 pl-10 pr-4 text-sm font-body" required />
+          </div>
+        
+          <div class="relative">
+            <div class="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(139,125,192,0.7)" stroke-width="2">
+                <rect x="3" y="11" width="18" height="11" rx="2" />
+                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+              </svg>
+            </div>
+            <input :type="showPass ? 'text' : 'password'" name="password" placeholder="Password" x-model="signInPass"
+              class="input-field w-full rounded-xl py-3 pl-10 pr-10 text-sm font-body" required />
+            <button type="button" @click="showPass = !showPass" class="absolute inset-y-0 right-3 flex items-center"
+              style="color:rgba(139,125,192,0.7);">
+              <svg x-show="!showPass" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+              <svg x-show="showPass" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2">
+                <path
+                  d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                <line x1="1" y1="1" x2="23" y2="23" />
+              </svg>
+            </button>
+          </div>
+        
+          <div class="flex justify-end">
+            <button type="button" class="text-xs transition-colors" style="color:#9d5af5;">
+              Forgot password?
+            </button>
+          </div>
+        
+          <button type="submit" :disabled="loading" class="btn-primary w-full rounded-xl py-3 font-display font-semibold text-sm text-white tracking-wide flex items-center justify-center gap-2">
+            <span x-show="!loading">Sign In</span>
+            <span x-show="loading" class="flex items-center gap-2">
+              <svg class="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="white" stroke-width="4" />
+                <path class="opacity-75" fill="white" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+              Signing in…
+            </span>
+          </button>
+        </form>
+
+        <div class="my-6 flex items-center gap-3">
+          <div class="flex-1 h-px" style="background:rgba(124,58,237,0.2);"></div>
+          <span class="text-xs" style="color:#6b5fa0;">Or continue with</span>
+          <div class="flex-1 h-px" style="background:rgba(124,58,237,0.2);"></div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <button @click="socialLogin('Google')"
+                  class="btn-social rounded-xl py-2.5 flex items-center justify-center gap-2 text-sm font-medium font-body">
+            <svg width="16" height="16" viewBox="0 0 24 24">
+              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+            </svg>
+            Google
+          </button>
+          <button @click="socialLogin('Facebook')"
+                  class="btn-social rounded-xl py-2.5 flex items-center justify-center gap-2 text-sm font-medium font-body">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="#1877F2">
+              <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+            </svg>
+            Facebook
+          </button>
+        </div>
+
+        <p class="text-center mt-6 text-xs" style="color:#6b5fa0;">
+          By signing in you agree to our
+          <a href="#" style="color:#9d5af5;" class="hover:underline">Terms &amp; Conditions</a>
+        </p>
+      </div>
+
+     </div>
+
+      <!-- ── LOGGED IN STATE ── -->
+      <div x-show="tab === 'loggedin'" x-transition:enter="transition ease-out duration-300"
+           x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
+           class="text-center py-4">
+
+        <!-- Avatar -->
+        <div class="mx-auto mb-4 w-20 h-20 rounded-full flex items-center justify-center text-3xl font-display font-bold"
+             style="background:linear-gradient(135deg,#7c3aed,#9d5af5); color:white;"
+             x-text="userInitials"></div>
+
+        <h3 class="font-display font-bold text-xl mb-1" style="color:#e8e0ff;" x-text="'Welcome, ' + firstName + '!'"></h3>
+        <p class="text-sm mb-2" style="color:#8b7dc0;" x-text="loggedEmail"></p>
+        <div class="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium mb-8"
+             style="background:rgba(124,58,237,0.2);color:#b87fff;border:1px solid rgba(124,58,237,0.3);">
+          <div class="w-1.5 h-1.5 rounded-full bg-emerald-400"></div>
+          Active session
+        </div>
+
+        <button @click="handleLogout()"
+                class="w-full rounded-xl py-3 font-display font-semibold text-sm transition-all"
+                style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.35);color:#fca5a5;"
+                @mouseover="$el.style.background='rgba(239,68,68,0.25)'"
+                @mouseleave="$el.style.background='rgba(239,68,68,0.15)'">
+          Sign Out
+        </button>
+      </div>
+
+    </div>
+    <!-- /AUTH CARD -->
+  </div>
+
+  <!-- ═══════════════ ALPINE JS APP ═══════════════ -->
+  <script>
+    function authApp() {
+      return {
+        tab: 'signin',
+        loading: false,
+        message: '',
+        isError: false,
+        showPass: false,
+        showPass2: false,
+        signInEmail: '',
+        signInPass: '',
+        signUpFirst: '',
+        signUpLast: '',
+        signUpEmail: '',
+        signUpPass: '',
+        loggedEmail: '',
+        firstName: '',
+
+        get userInitials() {
+          if (!this.firstName) return '?';
+          return this.firstName.charAt(0).toUpperCase();
+        },
+
+        get passwordStrength() {
+          const p = this.signUpPass;
+          let s = 0;
+          if (p.length >= 8) s++;
+          if (/[A-Z]/.test(p)) s++;
+          if (/[0-9]/.test(p)) s++;
+          if (/[^A-Za-z0-9]/.test(p)) s++;
+          return Math.max(1, s);
+        },
+
+        get strengthColor() {
+          return ['#ef4444','#f97316','#eab308','#22c55e'][this.passwordStrength - 1];
+        },
+
+        get strengthLabel() {
+          return ['Weak','Fair','Good','Strong'][this.passwordStrength - 1];
+        },
+
+        clearMessages() {
+          this.message = '';
+          this.isError = false;
+        },
+
+        handleSignIn(form) {
+          if (!this.signInEmail || !this.signInPass) {
+            this.message = 'Please fill in all fields.';
+            this.isError = true;
+            return;
+          }
+          this.loading = true;
+          this.message = '';
+          // Simulate HTMX/API call
+          setTimeout(() => {
+            this.loading = false;
+            this.loggedEmail = this.signInEmail;
+            this.firstName = this.signInEmail.split('@')[0];
+            this.tab = 'loggedin';
+          }, 1200);
+        },
+
+        handleSignUp(form) {
+          if (!this.signUpFirst || !this.signUpEmail || !this.signUpPass) {
+            this.message = 'Please fill in all required fields.';
+            this.isError = true;
+            return;
+          }
+          if (this.signUpPass.length < 6) {
+            this.message = 'Password must be at least 6 characters.';
+            this.isError = true;
+            return;
+          }
+          this.loading = true;
+          this.message = '';
+          setTimeout(() => {
+            this.loading = false;
+            this.loggedEmail = this.signUpEmail;
+            this.firstName = this.signUpFirst;
+            this.tab = 'loggedin';
+          }, 1400);
+        },
+
+        handleLogout() {
+          this.loading = true;
+          setTimeout(() => {
+            this.loading = false;
+            this.loggedEmail = '';
+            this.firstName = '';
+            this.signInEmail = '';
+            this.signInPass = '';
+            this.signUpFirst = '';
+            this.signUpLast = '';
+            this.signUpEmail = '';
+            this.signUpPass = '';
+            this.tab = 'signin';
+            this.message = '';
+          }, 600);
+        },
+
+        socialLogin(provider) {
+          this.loading = true;
+          this.message = '';
+          setTimeout(() => {
+            this.loading = false;
+            this.loggedEmail = `user@${provider.toLowerCase()}.com`;
+            this.firstName = provider + 'User';
+            this.tab = 'loggedin';
+          }, 1000);
+        },
+
+        init() {
+          this.spawnStars();
+        },
+
+        spawnStars() {
+          const container = document.getElementById('stars-container');
+          for (let i = 0; i < 120; i++) {
+            const star = document.createElement('div');
+            star.className = 'star';
+            const size = Math.random() * 2.5 + 0.5;
+            star.style.cssText = `
+              width:${size}px;height:${size}px;
+              top:${Math.random() * 100}%;left:${Math.random() * 100}%;
+              opacity:${Math.random() * 0.6 + 0.1};
+              animation: twinkle ${2 + Math.random() * 4}s ease-in-out infinite;
+              animation-delay: ${Math.random() * 5}s;
+            `;
+            container.appendChild(star);
+          }
+        }
+      }
+    }
+  </script>
+</body>
+</html>

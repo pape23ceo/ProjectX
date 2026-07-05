@@ -44,8 +44,6 @@ class Weather:
     def __init__(self, country_code, city_code):
         self.city_code = city_code
         self.country_code = country_code
-        # Internal placeholders so we don't calculate weather calculations twice per instance lifespan
-        self._processed_data = None 
 
     def __str__(self):
         return self.country_code
@@ -54,66 +52,48 @@ class Weather:
         """
         Retrieves coordinates with an independent long-term cache (30 days).
         """
-        geo_cache_key = f"geo_{self.country_code}_{self.city_code}"
-        coords = cache.get(geo_cache_key)
-        
-        if coords is not None:
-            return coords
 
         try:
             geolocator = Nominatim(user_agent="pape_weather_website")
             location = geolocator.geocode(f"{self.city_code}, {self.country_code}")
             if location:
-                coords = (location.latitude, location.longitude)
-                # Cache coordinates for 1 hour (3600 seconds)
-                cache.set(geo_cache_key, coords, timeout=3600)
-                return coords
+                return (location.latitude, location.longitude)
+                 
         except Exception as e:
             print(f"Geocoding failed: {e}")
-        
-        return None
+            return None , None
 
     def weather_json(self):
         """
         Fetch raw weather data using cached coordinates and retry logic.
         """
-        coordinates = self.get_coordinates()
-        if not coordinates:
+
+        latitude, longitude = self.get_coordinates()
+
+        if latitude and longitude is None:
             print("Could not obtain coordinates.")
             return None
-            
-        latitude, longitude = coordinates
-        max_retries = 3  # Reduced from 50. 50 retries with 5s sleep = 4+ minutes hangtime!
-        attempts = 0
+        cache_key = f"weather_forecast_{latitude}_{longitude}"
+        cached_json = cache.get(cache_key)
 
-        while attempts < max_retries:
+        if not cached_json:
             try:
                 url = f"https://api.met.no/weatherapi/locationforecast/2.0/compact?lat={latitude}&lon={longitude}"
                 response = requests.get(url, headers=self.headers)
                 response.raise_for_status()
-                return response.json()
+                weather_json = response.json()
+                cache.set(cache_key, weather_json, timeout=3600)
+                return weather_json
+              
             except Exception as e:
-                attempts += 1
-                print(f"Attempt {attempts} to retrieve weather data failed: {e}")
-                t.sleep(2)
-
-        print("Max retries reached. Could not fetch weather data.")
-        return None
-
+                return None
+            
+        return cached_json
+    
     def weather_data(self):
         """
         Extract and process specific weather parameters from API response.
         """
-        # Short-circuit if this instance has already run calculations once in this lifecycle
-        if self._processed_data is not None:
-            return self._processed_data
-
-        cache_key = f"weather_data_{self.country_code}_{self.city_code}"
-        cached_result = cache.get(cache_key)
-        
-        if cached_result is not None:
-            self._processed_data = cached_result
-            return cached_result
 
         json_data = self.weather_json()
         if json_data is None:
@@ -188,10 +168,6 @@ class Weather:
 
         processed_data = (air_temperature, relative_humidity, wind_speed, weather_description, symbol_code, temp_24h, weekly)
         
-        # Save processed payload to cache for 1 hour
-        cache.set(cache_key, processed_data, timeout=3600)
-        self._processed_data = processed_data
-        
         return processed_data
 
     def feels_like_temperature(self):
@@ -222,3 +198,8 @@ class Weather:
             return round((wc_f - 32) * 5 / 9, 2)
 
         return round(temperature, 2)
+    
+if __name__ == "__main__":
+    x = Weather('IN',232101)
+    temperature, humidity, wind_speed, *_ = x.weather_data()
+    print(temperature)

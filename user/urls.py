@@ -1,12 +1,12 @@
 from django.urls import path
 from . import views
+from rest_framework_simplejwt.views import TokenRefreshView, TokenObtainPairView
 urlpatterns = [ 
-    # This path defines the URL pattern for the homepage of the application.
-    # The empty string '' signifies the root URL (e.g., http://yourdomain.com/).
-    # When a user accesses the root URL, the 'home' view function from the 'views.py' file will be executed.
-    path('login/', views.login,name="login"),
-    path('signup/', views.sign_up, name="sign_up" ),
-    path('logout/', views.logout_view, name='logout'),
-    # path('verify-otp/resend/', views.resend_otp_view, name='resend_otp'),
-    path('verify-otp/', views.verify_otp_extension_view, name='verify_otp_extension'),
+    path('signup/', views.signup_view, name='signup'),
+    path('login/', views.CustomTokenObtainPairView.as_view(), name='login'),
+    path('token/', TokenObtainPairView.as_view(), name='token'),
+    path('token_refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('home/', views.home_view, name='home'),
+    path('verify-email/', views.verify_email_view, name='verify_email'),
+    path('resend-otp/', views.resend_otp_view, name='resend_otp'),
 ]
