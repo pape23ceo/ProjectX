@@ -46,4 +46,21 @@
       <working-dir>$ProjectFileDir$</working-dir>
     </data-source>
   </DataSourceFromHistory>
+  <DataSourceFromHistory isRemovedFromProject="false">
+    <data-source source="LOCAL" name="weather_application_database@172.16.32.134" uuid="9ea4f6a2-b61d-46c5-83e3-a82cd5fa2005">
+      <database-info product="" version="" jdbc-version="" driver-name="" driver-version="" dbms="POSTGRES" />
+      <driver-ref>postgresql</driver-ref>
+      <synchronize>true</synchronize>
+      <jdbc-driver>org.postgresql.Driver</jdbc-driver>
+      <jdbc-url>jdbc:postgresql://172.16.32.134:5432/weather_application_database</jdbc-url>
+      <secret-storage>master_key</secret-storage>
+      <user-name>priyanshu</user-name>
+      <schema-mapping />
+      <working-dir>$ProjectFileDir$</working-dir>
+      <ssh-properties>
+        <enabled>true</enabled>
+        <ssh-config-id>e1362078-b44b-4968-a753-60fe93abcebd</ssh-config-id>
+      </ssh-properties>
+    </data-source>
+  </DataSourceFromHistory>
 </DataSourcesHistory>

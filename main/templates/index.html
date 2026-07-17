@@ -1,16 +1,146 @@
 <!DOCTYPE html>
 <html lang="en">
+
+{{ backend_json|json_script:"json-weather-data" }}
+{% load static %}
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>weather website</title>
+    <script src="{% static 'js/index.js' %}" defer></script>
+    <link rel="stylesheet" href="{% static 'css/index-style.css'%}">
 </head>
+
 <body>
-        <form action="" method="get">
-            <!-- <label for="pincode">Pincode</label> -->
-            <input type="text" class="form-control" id="pincode" name="pincode" placeholder="e.g., 232101">
-            <button type="submit">click me!</button>
-        </form>
-    <p><strong>Temperature:</strong> {{ temp }}°C</p>
+    <div class="container">
+        <div class="today-weather">
+            <span class="weather-discription">
+                <div id="temp-today" > <p>&deg;</p></div>
+                <div class="temp-feels">16° / 12° Feels like 15°</div>
+                <div class="weather-details">
+                    <div class="detail-item">Wind &lt;3km/h</div>
+                    <div class="detail-item">Humidity 80%</div>
+                    <div class="detail-item">Air quality 34</div>
+                </div>
+            </span>
+            <span class="location">
+                <h2 class="weather-condition" id="weather_discription"></h2>
+                <div class="location-container">
+                    <span class="location-name">Leuven, Belgium</span>
+                    <svg class="location-icon" viewBox="0 0 24 24" fill="currentColor">
+                        <path
+                            d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
+                    </svg>
+                </div>
+            </span>
+            <div class="weather-symbol">
+                <img src="{% static 'images/cloudy_day.png' %}" alt="">
+
+            </div>
+            <div class="graph">
+                <canvas id="myCanvasChart"></canvas>
+            </div>
+        </div>
+        <div class="weekly-weather">
+                <div class="week-day-box">
+                    <span class="week-day-name">Mon</span>
+                    <svg class="week-day-icon" viewBox="0 0 24 24" fill="currentColor">
+                        <path
+                            d="M6.05 6.05l1.41 1.41M12 3v2M17.95 6.05l-1.41 1.41M3 12h2M19 12h2M6.05 17.95l1.41-1.41M12 19v2M17.95 17.95l-1.41-1.41M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5z" />
+                    </svg>
+                    <div class="week-day-temp">19°<span>11°</span></div>
+                </div>
+                <div class="week-day-box">
+                    <span class="week-day-name">Mon</span>
+                    <svg class="week-day-icon" viewBox="0 0 24 24" fill="currentColor">
+                        <path
+                            d="M6.05 6.05l1.41 1.41M12 3v2M17.95 6.05l-1.41 1.41M3 12h2M19 12h2M6.05 17.95l1.41-1.41M12 19v2M17.95 17.95l-1.41-1.41M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5z" />
+                    </svg>
+                    <div class="week-day-temp">19°<span>11°</span></div>
+                </div>
+                
+                <div class="week-day-box">
+                    <span class="week-day-name">Tue</span>
+                    <svg class="week-day-icon" viewBox="0 0 24 24" fill="currentColor">
+                        <path
+                            d="M19.36 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.64-4.96z" />
+                    </svg>
+                    <div class="week-day-temp">22°<span>14°</span></div>
+                </div>
+                <div class="week-day-box">
+                    <span class="week-day-name">Mon</span>
+                    <svg class="week-day-icon" viewBox="0 0 24 24" fill="currentColor">
+                        <path
+                            d="M6.05 6.05l1.41 1.41M12 3v2M17.95 6.05l-1.41 1.41M3 12h2M19 12h2M6.05 17.95l1.41-1.41M12 19v2M17.95 17.95l-1.41-1.41M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5z" />
+                    </svg>
+                    <div class="week-day-temp">19°<span>11°</span></div>
+                </div>
+                
+                <div class="week-day-box">
+                    <span class="week-day-name">Tue</span>
+                    <svg class="week-day-icon" viewBox="0 0 24 24" fill="currentColor">
+                        <path
+                            d="M19.36 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.64-4.96z" />
+                    </svg>
+                    <div class="week-day-temp">22°<span>14°</span></div>
+                </div>
+                <div class="week-day-box">
+                    <span class="week-day-name">Mon</span>
+                    <svg class="week-day-icon" viewBox="0 0 24 24" fill="currentColor">
+                        <path
+                            d="M6.05 6.05l1.41 1.41M12 3v2M17.95 6.05l-1.41 1.41M3 12h2M19 12h2M6.05 17.95l1.41-1.41M12 19v2M17.95 17.95l-1.41-1.41M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5z" />
+                    </svg>
+                    <div class="week-day-temp">19°<span>11°</span></div>
+                </div>
+                
+                <div class="week-day-box">
+                    <span class="week-day-name">Tue</span>
+                    <svg class="week-day-icon" viewBox="0 0 24 24" fill="currentColor">
+                        <path
+                            d="M19.36 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.64-4.96z" />
+                    </svg>
+                    <div class="week-day-temp">22°<span>14°</span></div>
+                </div>
+
+                <div class="week-day-box">
+                    <span class="week-day-name">Tue</span>
+                    <svg class="week-day-icon" viewBox="0 0 24 24" fill="currentColor">
+                        <path
+                            d="M19.36 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.64-4.96z" />
+                    </svg>
+                    <div class="week-day-temp">22°<span>14°</span></div>
+                </div>
+
+                <div class="week-day-box">
+                    <span class="week-day-name">Wed</span>
+                    <svg class="week-day-icon" viewBox="0 0 24 24" fill="currentColor">
+                        <path
+                            d="M19.36 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.64-4.96z" />
+                    </svg>
+                    <div class="week-day-temp">25°<span>16°</span></div>
+                </div>
+
+                <div class="week-day-box">
+                    <span class="week-day-name">Thu</span>
+                    <svg class="week-day-icon" viewBox="0 0 24 24" fill="currentColor">
+                        <path
+                            d="M19.36 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.64-4.96z" />
+                    </svg>
+                    <div class="week-day-temp">28°<span>17°</span></div>
+                </div>
+
+                <div class="week-day-box">
+                    <span class="week-day-name">Fri</span>
+                    <svg class="week-day-icon" viewBox="0 0 24 24" fill="currentColor">
+                        <path
+                            d="M14.07 3.93l-1.41 1.42M12 2v2M6.05 6.05l1.41 1.41M3 12h2M6.05 17.95l1.41-1.41M19.36 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.64-4.96z" />
+                    </svg>
+                    <div class="week-day-temp">24°<span>13°</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
+
 </html>

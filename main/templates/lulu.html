@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ProjectX Weather</title>
+</head>
+
+<body>
+    <!-- Django safe JSON bridge -->
+    {{ backend_json|json_script:"json-weather-data" }}
+
+    <p><strong>Temperature:</strong> <span id="temp-today">--</span>°C</p>
+
+    <script>
+        const WEATHER_CONDITIONS = {
+            "clearsky_day": "Clear sky (Sunny)",
+            "clearsky_night": "Clear sky",
+            "partlycloudy_day": "Partly cloudy",
+            "partlycloudy_night": "Partly cloudy",
+            "cloudy": "Cloudy",
+            "lightrainshowers_day": "Light rain showers",
+            "rainshowers_day": "Rain showers",
+            "heavyrainshowers_day": "Heavy rain showers",
+            "lightrain": "Light rain",
+            "rain": "Rain",
+            "heavyrain": "Heavy rain",
+            "lightssnowshowers_day": "Light snow showers",
+            "snowshowers_day": "Snow showers",
+            "heavysnowshowers_day": "Heavy snow showers",
+            "lightsnow": "Light snow",
+            "snow": "Snow",
+            "heavysnow": "Heavy snow",
+            "fog": "Foggy",
+            "sleet": "Sleet",
+            "lightsleet": "Light sleet",
+            "heavysleet": "Heavy sleet",
+            "sleetshowers_day": "Sleet showers",
+            "lightssleetshowers_day": "Light sleet showers",
+            "heavysleetshowers_day": "Heavy sleet showers",
+            "thunderstorms": "Thunderstorms",
+            "lightrainshowersandthunder_day": "Light rain showers and thunder",
+            "rainandthunder": "Rain and thunder",
+            "heavyrainandthunder": "Heavy rain and thunder",
+            "fair_day": "Fair (Sunny)",
+        }
+        const jsonElement = document.getElementById('json-weather-data');
+        const weatherData = JSON.parse(jsonElement.textContent);
+
+        const timeseries = weatherData.properties.timeseries;
+        const temp = timeseries[0].data.instant.details.air_temperature;
+        const textElement = document.getElementById('temp-today');
+        textElement.textContent = temp;
+
+    </script>
+</body>
+
+</html>

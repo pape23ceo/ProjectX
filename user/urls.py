@@ -9,4 +9,5 @@ urlpatterns = [
     path('home/', views.home_view, name='home'),
     path('verify-email/', views.verify_email_view, name='verify_email'),
     path('resend-otp/', views.resend_otp_view, name='resend_otp'),
+    
 ]

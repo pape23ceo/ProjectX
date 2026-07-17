@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>5‑Hour Temperature</title>
+</head>
+
+<body style="margin:0; background:#fff;">
+
+    <canvas id="tempChart" style="display:block; width:100vw; height:100vh;"></canvas>
+
+    <script>
+        (function () {
+            const canvas = document.getElementById('tempChart');
+            const ctx = canvas.getContext('2d');
+
+            function resize() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+                drawChart();
+            }
+
+            function drawChart() {
+                const width = canvas.width;
+                const height = canvas.height;
+
+                ctx.clearRect(0, 0, width, height);
+
+                const margin = { top: 30, right: 20, bottom: 40, left: 20 };
+                const chartWidth = width - margin.left - margin.right;
+                const chartHeight = height - margin.top - margin.bottom;
+
+                // ---- 5 hours: 1h to 5h ----
+                const hours = [1, 2, 3, 4, 5];
+                const tempData = [18.0, 17.5, 17.0, 16.8, 16.5];
+
+                const seriesColor = '#3b82f6';
+
+                const minVal = 0;
+                const maxVal = Math.max(...tempData) * 1.08;
+                const yMax = Math.ceil(maxVal / 5) * 5;
+                const yMin = 0;
+
+                function getX(index) {
+                    return margin.left + (index / (hours.length - 1)) * chartWidth;
+                }
+
+                function getY(value) {
+                    const ratio = (value - yMin) / (yMax - yMin);
+                    return margin.top + chartHeight - (ratio * chartHeight);
+                }
+
+                // ---- X labels: 1h to 5h ----
+                ctx.fillStyle = '#64748b';
+                ctx.font = '9px system-ui, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'top';
+
+                for (let i = 0; i < hours.length; i++) {
+                    const x = getX(i);
+                    ctx.fillText(`${hours[i]}h`, x, margin.top + chartHeight + 6);
+                }
+
+                // ---- Y labels (temperature) ----
+                ctx.textAlign = 'left';
+                ctx.textBaseline = 'middle';
+                ctx.fillStyle = '#64748b';
+                ctx.font = '9px system-ui, sans-serif';
+
+                const step = 5;
+                for (let temp = yMin; temp <= yMax; temp += step) {
+                    const y = getY(temp);
+                    if (y >= margin.top - 4 && y <= margin.top + chartHeight + 4) {
+                        ctx.fillText(`${temp}°`, margin.left + 6, y);
+                    }
+                }
+
+                // ---- The line (no circles, no axes) ----
+                ctx.save();
+                ctx.beginPath();
+                for (let i = 0; i < tempData.length; i++) {
+                    const x = getX(i);
+                    const y = getY(tempData[i]);
+                    if (i === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                }
+                ctx.strokeStyle = seriesColor;
+                ctx.lineWidth = 3;
+                ctx.lineJoin = 'round';
+                ctx.lineCap = 'round';
+                ctx.stroke();
+                ctx.restore();
+            }
+
+            window.addEventListener('resize', resize);
+            resize();
+        })();
+    </script>
+
+</body>
+
+</html>

@@ -22,30 +22,20 @@ def home(request):
 
     # Handle GET request
     if request.method == 'GET':
-        weather_location_code = request.GET.get("pincode")
-        
+        weather_location_code = request.GET.get("coordinates")  # Get coordinates from the request
+        weather_json = None
         if weather_location_code:
             try:
-                contry_code, pin_code = weather_location_code.split(",")
-                x = weather_api.Weather(country_code=contry_code, city_code=pin_code)
-
-                air_temperature, relative_humidity, wind_speed, _, symbol , hours_temp, weekly= x.weather_data()
-                feels_like = x.feels_like_temperature()
-
-                # Update context with fetched data
-                context.update({
-                    'temp': air_temperature,
-                    'feels_like': feels_like,
-                    'wind': wind_speed,
-                    'humidity': relative_humidity,
-                    "path": f"images/weather_pic/{symbol}.svg",
-                    "weekly" : weekly,
-                    "hours_temp": hours_temp,
-                })
+                latitude, longitude = weather_location_code.split(",")
+                x = weather_api.Weather(latitude=latitude, longitude=longitude)
+                weather_json = x.weather_json()
                 
             except ValueError:
                 context['error'] = "Invalid pincode format. Use: COUNTRY_CODE,PINCODE"
             except Exception as e:
                 context['error'] = f"Weather data fetch failed: {str(e)}"
 
-    return render(request, 'index.html', context)
+    return render(request, 'index.html', {'backend_json': weather_json})
+
+def weather_search(request):
+    return render(request, 'main.html')

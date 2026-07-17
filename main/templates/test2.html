@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-Time Data Graph</title>
+<body>
+    <div class="chart-container">
+        
+    </div>
+    <script>
+    const canvas = document.getElementById('myCanvasChart');
+    const ctx = canvas.getContext('2d');
+
+    const data = [10, 45, 23, 85, 55, 70, 90];
+    const padding = 50;
+
+    const chartWidth = canvas.width - padding * 2;
+    const chartHeight = canvas.height - padding * 2;
+    const maxDataValue = Math.max(...data);
+
+    function getX(index) {
+        return padding + (index * (chartWidth / (data.length - 1)));
+    }
+
+    function getY(value) {
+        return canvas.height - padding - (value * (chartHeight / maxDataValue));
+    }
+
+    // --- Animation Control Variables ---
+    let currentProgress = 0;      // Starts at 0, builds up to 1.0 (100% complete)
+    const animationSpeed = 0.015; // Controls how fast the line travels across
+
+    function animateChart() {
+        // 1. Clear the canvas completely on every frame update
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // 2. Draw the background grid & Y axis text labels
+        ctx.strokeStyle = '#e2e8f0';
+        ctx.lineWidth = 1;
+        ctx.fillStyle = '#64748b';
+        ctx.font = '12px sans-serif';
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'middle';
+
+        const gridCount = 5;
+        for (let i = 0; i <= gridCount; i++) {
+            const gridValue = (maxDataValue / gridCount) * i;
+            const y = getY(gridValue);
+            ctx.beginPath();
+            ctx.moveTo(padding, y);
+            ctx.lineTo(canvas.width - padding, y);
+            ctx.stroke();
+            ctx.fillText(Math.round(gridValue), padding - 10, y);
+        }
+
+        // 3. Draw the main data line moving from left to right
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = '#3b82f6';
+        ctx.beginPath();
+        ctx.moveTo(getX(0), getY(data[0]));
+
+        // Figure out what percentage of the total line width we should draw right now
+        const targetXMax = padding + (chartWidth * currentProgress);
+
+        for (let i = 1; i < data.length; i++) {
+            const x = getX(i);
+            const y = getY(data[i]);
+
+            if (x <= targetXMax) {
+                // If the data point is fully within our animated horizon, draw to it directly
+                ctx.lineTo(x, y);
+            } else {
+                // If our animated horizon cuts off *between* two points, calculate exactly 
+                // where the line hits the boundary edge and draw up to that cut-off spot.
+                const prevX = getX(i - 1);
+                const prevY = getY(data[i - 1]);
+
+                const interpolationRatio = (targetXMax - prevX) / (x - prevX);
+                const interpolatedY = prevY + (y - prevY) * interpolationRatio;
+
+                ctx.lineTo(targetXMax, interpolatedY);
+                break; // Stop drawing any further points for this frame loop
+            }
+        }
+        ctx.stroke();
+
+        // 4. Fill the gradient under the moving line path
+        ctx.lineTo(targetXMax, canvas.height - padding);
+        ctx.lineTo(getX(0), canvas.height - padding);
+        ctx.closePath();
+        const gradient = ctx.createLinearGradient(0, padding, 0, canvas.height - padding);
+        gradient.addColorStop(0, 'rgba(59, 130, 246, 0.3)');
+        gradient.addColorStop(1, 'rgba(59, 130, 246, 0.0)');
+        ctx.fillStyle = gradient;
+        ctx.fill();
+
+        // 5. Draw Axis Borders
+        ctx.strokeStyle = '#475569';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(padding, padding);
+        ctx.lineTo(padding, canvas.height - padding);
+        ctx.lineTo(canvas.width - padding, canvas.height - padding);
+        ctx.stroke();
+
+        // 6. Only pop up data dots and labels once the line animation horizon passes them
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+
+        data.forEach((value, index) => {
+            const x = getX(index);
+            const y = getY(value);
+
+            if (x <= targetXMax) {
+                ctx.beginPath();
+                ctx.arc(x, y, 5, 0, Math.PI * 2);
+                ctx.fillStyle = '#3b82f6';
+                ctx.fill();
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                ctx.fillStyle = '#64748b';
+                ctx.fillText(`P${index + 1}`, x, canvas.height - padding + 10);
+            }
+        });
+
+        // 7. Increment current progressive frame threshold until it hits 100% scale
+        if (currentProgress < 1) {
+            currentProgress += animationSpeed;
+            if (currentProgress > 1) currentProgress = 1; // Cap it out precisely
+            requestAnimationFrame(animateChart); // Call the next frame rendering cycle
+        }
+    }
+
+    // Fire the first animation tick execution loop
+    animateChart();
+    </script>
+</body>
+
+</html>
