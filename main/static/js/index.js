@@ -1,6 +1,7 @@
 const canvas = document.getElementById('myCanvasChart');
 const ctx = canvas.getContext('2d');
 
+// collection
 const WEATHER_CONDITIONS = {
     "clearsky_day": "Clear sky (Sunny)",
     "clearsky_night": "Clear sky",
@@ -32,31 +33,100 @@ const WEATHER_CONDITIONS = {
     "heavyrainandthunder": "Heavy rain and thunder",
     "fair_day": "Fair (Sunny)",
 }
+
+// define the value for weather data
 const jsonElement = document.getElementById('json-weather-data');
 const weatherData = JSON.parse(jsonElement.textContent);
-
 const timeseries = weatherData.properties.timeseries;
 const temp = timeseries[0].data.instant.details.air_temperature;
-const textElement = document.getElementById('temp-today');
-const temp24h = timeseries
-    .slice(0, Math.min(24, timeseries.length))
-    .map(item => item.data.instant.details.air_temperature);
-textElement.textContent = (temp);
+const humidity = timeseries[0].data.instant.details.relative_humidity;
+const windSpeed = timeseries[0].data.instant.details.wind_speed;
 const next1 = timeseries[0]?.data?.next_1_hours ?? {};
 const symbol_code = next1?.summary?.symbol_code;
 const weather_discrption = document.getElementById('weather_discription');
-weather_discrption.textContent = this.WEATHER_CONDITIONS[symbol_code] ?? "Unknown" ;
-const temperatures = temp24h.slice(0, 5);
-const hours = ['8 AM', '10 AM', '12 PM', '2 PM', '4 PM', '6 PM', '8 PM'];
+weather_discrption.textContent = WEATHER_CONDITIONS[symbol_code] ?? "Unknown";
+
+const temp24h = timeseries
+    .slice(0, Math.min(24, timeseries.length))
+    .map(item => item.data.instant.details.air_temperature);
+const temperatures = temp24h.slice(0, 7);
+
+function getNextHours(count, includeCurrentHour = false) {
+    const now = new Date();
+    const currentHour = now.getHours();
+
+
+    let startHour = currentHour;
+    if (!includeCurrentHour) {
+
+        startHour = currentHour + 1;
+    }
+
+
+    const start = new Date(now);
+    start.setHours(startHour, 0, 0, 0);
+
+    const hours = [];
+    for (let i = 0; i < count; i++) {
+        const h = new Date(start);
+        h.setHours(start.getHours() + i);
+
+        const hourStr = String(h.getHours()).padStart(2, '0') + ':00';
+        hours.push(hourStr);
+    }
+    return hours;
+}
+
+const hours = getNextHours(7, false);
 
 let chartWidth, chartHeight, paddingX, paddingY, maxDataValue, minDataValue;
+let animationId = null;
+function feelsLikeTemperature(temperature, humidity, windSpeed) {
+    // Return null when temperature is missing, matching Python's None behavior
+    if (temperature == null) return null;
 
+    // Convert Celsius to Fahrenheit for use in the formulas
+    const tempF = (temperature * 9) / 5 + 32;
+
+    // Heat index (applies at high temperatures, requires humidity)
+    if (temperature >= 27 && humidity != null) {
+        const hi =
+            -42.379 +
+            2.04901523 * tempF +
+            10.14333127 * humidity -
+            0.22475541 * tempF * humidity -
+            0.00683783 * tempF ** 2 -
+            0.05481717 * humidity ** 2 +
+            0.00122874 * tempF ** 2 * humidity +
+            0.00085282 * tempF * humidity ** 2 -
+            0.00000199 * tempF ** 2 * humidity ** 2;
+
+        const hiCelsius = ((hi - 32) * 5) / 9;
+        return Number(hiCelsius.toFixed(2));
+    }
+
+    // Wind chill (applies at low temperatures, requires wind speed)
+    if (temperature <= 10 && windSpeed != null) {
+        const windPower = windSpeed ** 0.16;
+        const wc =
+            35.74 +
+            0.6215 * tempF -
+            35.75 * windPower +
+            0.4275 * tempF * windPower;
+
+        const wcCelsius = ((wc - 32) * 5) / 9;
+        return Number(wcCelsius.toFixed(2));
+    }
+
+    // Default: return the original temperature rounded to 2 decimals
+    return Number(temperature.toFixed(2));
+}
 function setupCanvasDimensions() {
     const rect = canvas.getBoundingClientRect();
     canvas.width = rect.width;
     canvas.height = rect.height;
     paddingX = 55;
-    paddingY = 25;
+    paddingY = 30;
     chartWidth = canvas.width - paddingX * 2;
     chartHeight = canvas.height - paddingY * 2;
     maxDataValue = Math.max(...temperatures);
@@ -73,16 +143,21 @@ function getY(value) {
 }
 
 let currentProgress = 0;
-const animationSpeed = 0.005;
+const animationSpeed = 0.015;
+function easeOutCubic(x) {
+    return 1 - Math.pow(1 - x, 3);
+}
 
 function animateChart() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+
     ctx.fillStyle = '#94a3b8';
     ctx.font = '11px sans-serif';
+
+
     ctx.textAlign = 'right';
     ctx.textBaseline = 'middle';
-
     const labelCount = 6;
     for (let i = 0; i < labelCount; i++) {
         const ratio = i / (labelCount - 1);
@@ -91,17 +166,27 @@ function animateChart() {
         ctx.fillText(`${Math.round(labelValue)}°C`, paddingX - 10, y);
     }
 
+    // X-Axis Labels (Hours)
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.fillStyle = '#64748b';
+    hours.forEach((hour, index) => {
+        ctx.fillText(hour, getX(index), canvas.height - paddingY + 10);
+    });
+
+    // --- 2. Animate Vector Line ---
+    const easedProgress = easeOutCubic(currentProgress);
+    const targetXMax = paddingX + (chartWidth * easedProgress);
+
     const lineGradient = ctx.createLinearGradient(paddingX, 0, canvas.width - paddingX, 0);
     lineGradient.addColorStop(0, '#61acf6');
-    lineGradient.addColorStop(0.5, '#2f7dc2');
+    lineGradient.addColorStop(0.5, '#ffffff');
     lineGradient.addColorStop(1, '#61acf6');
 
     ctx.lineWidth = 5;
     ctx.strokeStyle = lineGradient;
     ctx.beginPath();
     ctx.moveTo(getX(0), getY(temperatures[0]));
-
-    const targetXMax = paddingX + (chartWidth * currentProgress);
 
     for (let i = 1; i < temperatures.length; i++) {
         const x = getX(i);
@@ -119,22 +204,11 @@ function animateChart() {
     }
     ctx.stroke();
 
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'top';
-
-    temperatures.forEach((value, index) => {
-        const x = getX(index);
-        const y = getY(value);
-        if (x <= targetXMax) {
-            ctx.fillStyle = '#64748b';
-            ctx.fillText(hours[index], x, canvas.height - paddingY + 8);
-        }
-    });
-
+    // --- 3. Animation Loop Control ---
     if (currentProgress < 1) {
         currentProgress += animationSpeed;
         if (currentProgress > 1) currentProgress = 1;
-        requestAnimationFrame(animateChart);
+        animationId = requestAnimationFrame(animateChart);
     }
 }
 
@@ -142,7 +216,17 @@ setupCanvasDimensions();
 animateChart();
 
 window.addEventListener('resize', () => {
+    if (animationId) cancelAnimationFrame(animationId); // Stop running animation
     setupCanvasDimensions();
     currentProgress = 1;
     animateChart();
 });
+
+// accessing the html tag to define content and give value
+const today_temp = document.getElementById('temp-today');
+today_temp.textContent = temp + '°';
+const humidity_detail = document.getElementById("humidity");
+humidity_detail.textContent = "Humidity " + humidity + "%";
+const wind_speed_detail = document.getElementById("windspeed")
+wind_speed_detail.textContent = "Wind " + windSpeed + "m/s";
+const feelslike = feelsLikeTemperature(temp, humidity, windSpeed)

@@ -168,12 +168,8 @@ class Weather:
         
         return processed_data
 
-    def feels_like_temperature(self):
-        """
-        Calculate feels-like temperature based on environmental conditions.
-        """
-        data = self.weather_data()  # Uses instance tracker or cache hit seamlessly now
-        temperature, humidity, wind_speed, *_ = data
+    def feels_like_temperature(temperature, humidity, wind_speed):
+
         if temperature is None:
             return None
 

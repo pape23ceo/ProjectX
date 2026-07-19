@@ -32,6 +32,7 @@ class Weather:
                 return weather_json
               
             except Exception as e:
+                print("no internet")
                 return None
             
         return cached_json
