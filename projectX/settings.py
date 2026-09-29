@@ -62,18 +62,18 @@ SIMPLE_JWT = {
 # INSTALLED_APPS: A list of strings naming all the Django applications that are active in this project.
 # Django comes with several built-in apps (like admin, auth, etc.), and you'll add your own here.
 INSTALLED_APPS = [
-    'drf_jwt_2fa',
+    # 'drf_jwt_2fa',
     'rest_framework',
     'corsheaders',
     "unfold", # This is custom admin panel extension for dajngo this help to imporve the quality of work flow
     'customadmin.apps.CustomadminConfig', # Your 'customadmin' application. The '.apps.CustomadminConfig' specifies the configuration class.
-    'user.apps.UserConfig',              # Your 'user' application. The '.apps.UserConfig' specifies the configuration class.
-    'main.apps.MainConfig',              # Your 'services' application. The '.apps.ServicesConfig' specifies the configuration class.
-    'django.contrib.admin',              # Django's administrative interface.
-    'django.contrib.auth',               # Django's authentication and authorization system.
-    'django.contrib.contenttypes',       # A framework for handling content types in Django.
-    'django.contrib.sessions',           # Django's session management system.
-    'django.contrib.messages',           # A framework for displaying temporary messages to users.
+    'user.apps.UserConfig',# Your 'user' application. The '.apps.UserConfig' specifies the configuration class.
+    'main.apps.MainConfig',# Your 'services' application. The '.apps.ServicesConfig' specifies the configuration class.
+    'django.contrib.admin',# Django's administrative interface.
+    'django.contrib.auth',# Django's authentication and authorization system.
+    'django.contrib.contenttypes',# A framework for handling content types in Django.
+    'django.contrib.sessions',# Django's session management system.
+    'django.contrib.messages',# A framework for displaying temporary messages to users.
     'django.contrib.staticfiles',        # For managing static files like CSS, JavaScript, and images.
 ]
 

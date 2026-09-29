@@ -7,19 +7,6 @@ from . import weather_api
 # @login_required
 def home(request):
     # Initialize default values
-    context = {
-        'city': "--:--",
-        'date': "--",
-        'temp': "--",
-        'times': "--:--",
-        'month': "--",
-        'feels_like': '--',
-        'wind': '--',
-        'humidity': "--",
-        "path": "images/weather_pic/clearsky_day.svg",
-        'error': None
-    }
-
     # Handle GET request
     if request.method == 'GET':
         weather_location_code = request.GET.get("coordinates")  # Get coordinates from the request
@@ -29,11 +16,9 @@ def home(request):
                 latitude, longitude = weather_location_code.split(",")
                 x = weather_api.Weather(latitude=latitude, longitude=longitude)
                 weather_json = x.weather_json()
-                
-            except ValueError:
-                context['error'] = "Invalid pincode format. Use: COUNTRY_CODE,PINCODE"
+            
             except Exception as e:
-                context['error'] = f"Weather data fetch failed: {str(e)}"
+                return None
 
     return render(request, 'index.html', {'backend_json': weather_json})
 

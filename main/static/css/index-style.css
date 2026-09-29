@@ -8,7 +8,6 @@
  }
 
  body {
-     background: radial-gradient(#196db8, #78AFE9);
      min-height: 100vh;
  }
 
@@ -142,7 +141,7 @@
      letter-spacing: -0.5px;
  }
 
- .location-container {
+ #location-container {
      display: flex;
      align-items: center;
      gap: 4px;

@@ -1,25 +1,25 @@
-import email
 import datetime
 from django import forms
-from .forms import SignUpForm
-from django.urls import reverse
 from django.conf import settings
-from rest_framework import generics
-from django.contrib.auth import login, logout
+from django.contrib.auth import get_user_model, logout
 from django.core.mail import send_mail
-from .serializers import UserSerializer
-from django.contrib.auth.models import User
-from rest_framework.response import Response
 from django.shortcuts import render, redirect
-from rest_framework.permissions import IsAuthenticated ,AllowAny 
-from rest_framework.decorators import api_view, permission_classes
-from django.contrib.auth.forms import UserCreationForm
-from .models import EmailOTP , UserProfile
+from django.utils import timezone
+
+from rest_framework import generics
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.authentication import JWTAuthentication
-# Create your views here.
 
+from .forms import SignUpForm
+from .models import EmailOTP, UserProfile
+from .serializers import UserSerializer
+
+User = get_user_model()
+
+
+# Custom JWT Authentication reading tokens from HTTP-Only Cookies
 class CookieJWTAuthentication(JWTAuthentication):
     def authenticate(self, request):
         raw_token = request.COOKIES.get('access_token')
@@ -27,11 +27,38 @@ class CookieJWTAuthentication(JWTAuthentication):
             return None
         validated_token = self.get_validated_token(raw_token)
         return self.get_user(validated_token), validated_token
-    
+
+
+# Helper function to set JWT HTTP-Only Cookies consistently
+def set_jwt_cookies(response, user):
+    refresh = RefreshToken.for_user(user)
+    access_token = str(refresh.access_token)
+    refresh_token = str(refresh)
+
+    response.set_cookie(
+        key='access_token',
+        value=access_token,
+        httponly=True,
+        secure=not settings.DEBUG,
+        samesite='Lax',
+        max_age=30 * 60  # 30 minutes in seconds
+    )
+    response.set_cookie(
+        key='refresh_token',
+        value=refresh_token,
+        httponly=True,
+        secure=not settings.DEBUG,
+        samesite='Lax',
+        max_age=24 * 60 * 60  # 1 day in seconds
+    )
+    return response
+
+
 class CreateUserView(generics.ListCreateAPIView):
     queryset = User.objects.all()
-    serializer_class = UserSerializer 
-    permission_classes = [AllowAny] 
+    serializer_class = UserSerializer
+    permission_classes = [AllowAny]
+
 
 class CustomTokenObtainPairView(TokenObtainPairView):
     template_name = 'login.html'
@@ -40,48 +67,47 @@ class CustomTokenObtainPairView(TokenObtainPairView):
         return render(request, self.template_name)
 
     def post(self, request, *args, **kwargs):
-        # Call the parent to validate credentials and get tokens
-        response = super().post(request, *args, **kwargs)
+        # 1. Bind form/request data to SimpleJWT serializer directly
+        serializer = self.get_serializer(data=request.data)
 
-        # If login successful (status 200), set cookies and redirect
-        if response.status_code == 200:
-            access_token = response.data.get('access')
-            refresh_token = response.data.get('refresh')
+        try:
+            # 2. Validate credentials. Throws exception if login fails.
+            serializer.is_valid(raise_exception=True)
+        except (InvalidToken, TokenError, APIException) as exc:
+            # 3. Catch login failure and re-render login.html with error message
+            error_detail = getattr(exc, 'detail', {'detail': 'Invalid credentials'})
+            return render(request, self.template_name, {'errors': error_detail}, status=400)
 
-            redirect_response = redirect('home')   # make sure 'home' URL exists
-            redirect_response.set_cookie(
-                key='access_token',
-                value=access_token,
-                httponly=True,
-                secure=not settings.DEBUG,
-                samesite='Lax',
-                max_age=datetime.timedelta(minutes=30)   # match ACCESS_TOKEN_LIFETIME
-            )
-            redirect_response.set_cookie(
-                key='refresh_token',
-                value=refresh_token,
-                httponly=True,
-                secure=not settings.DEBUG,
-                samesite='Lax',
-                max_age=datetime.timedelta(days=1)       # match REFRESH_TOKEN_LIFETIME
-            )
-            return redirect_response
+        # 4. Extract the validated user object attached by SimpleJWT
+        user = serializer.user
 
-        # If login failed, re-render the login template with errors
-        return render(request, self.template_name, {'errors': response.data})
+        # 5. Redirect to home and attach HTTP-Only cookies
+        redirect_response = redirect('weather_search')
+        return set_jwt_cookies(redirect_response, user)
+
+
 def logout_view(request):
     logout(request)
-    return redirect('login') 
+    response = redirect('login')
+    response.delete_cookie('access_token')
+    response.delete_cookie('refresh_token')
+    return response
+
+
 def signup_view(request):
     if request.method == 'POST':
         form = SignUpForm(request.POST)
         if form.is_valid():
-            # Save user but keep inactive until email verified
+            email = form.cleaned_data['email']
+            
+            # Check duplicate email properly without crashing
+            if User.objects.filter(email=email).exists():
+                form.add_error('email', "A user with this email already exists.")
+                return render(request, 'sign-up.html', {'form': form})
+
             user = form.save(commit=False)
             user.is_active = False
-            user.email = form.cleaned_data['email']
-            if User.objects.filter(email=user.email).exists():
-                raise forms.ValidationError("A user with this email already exists.")
+            user.email = email
             user.save()
 
             # Generate OTP and send email
@@ -94,13 +120,13 @@ def signup_view(request):
                 fail_silently=False,
             )
 
-            # Store user id in session so we can identify them on the verification page
             request.session['verify_user_id'] = user.id
-            return redirect('verify_email')   # we'll create this URL
-
+            return redirect('verify_email')
     else:
         form = SignUpForm()
+
     return render(request, 'sign-up.html', {'form': form})
+
 
 def verify_email_view(request):
     user_id = request.session.get('verify_user_id')
@@ -119,37 +145,38 @@ def verify_email_view(request):
         except EmailOTP.DoesNotExist:
             return render(request, 'verify_otp.html', {'error': 'No OTP found. Please sign up again.'})
 
-        # Check expiry (e.g., 10 minutes)
-        if otp_obj.created_at + datetime.timedelta(minutes=10) < datetime.datetime.now(datetime.timezone.utc):
+        # Check expiry (10 minutes) using timezone.now()
+        if otp_obj.created_at + datetime.timedelta(minutes=10) < timezone.now():
             return render(request, 'verify_otp.html', {'error': 'OTP expired. Please sign up again.'})
 
         if otp_obj.otp == entered_otp:
-            # Activate user and clean up
             user.is_active = True
             user.save()
             otp_obj.delete()
 
-            # Generate JWT tokens and set cookies, then redirect home
-            refresh = RefreshToken.for_user(user)
-            access_token = str(refresh.access_token)
-            refresh_token = str(refresh)
-
             response = redirect('home')
-            response.set_cookie('access_token', access_token, httponly=True, samesite='Lax')
-            response.set_cookie('refresh_token', refresh_token, httponly=True, samesite='Lax')
-            # Clear the session key
-            del request.session['verify_user_id']
+            response = set_jwt_cookies(response, user)
+
+            if 'verify_user_id' in request.session:
+                del request.session['verify_user_id']
+                
             return response
         else:
             return render(request, 'verify_otp.html', {'error': 'Invalid OTP'})
 
     return render(request, 'verify_otp.html')
 
+
 def resend_otp_view(request):
     user_id = request.session.get('verify_user_id')
     if not user_id:
         return redirect('signup')
-    user = User.objects.get(id=user_id)
+
+    try:
+        user = User.objects.get(id=user_id)
+    except User.DoesNotExist:
+        return redirect('signup')
+
     otp_code = EmailOTP.generate_otp(user)
     send_mail(
         'Your verification code',
@@ -158,7 +185,8 @@ def resend_otp_view(request):
         [user.email],
         fail_silently=False,
     )
-    return render(request, 'verify_email.html', {'message': 'OTP resent'})
+    return render(request, 'verify_otp.html', {'message': 'OTP resent successfully.'})
+
 
 def home_view(request):
     return render(request, 'home.html')
